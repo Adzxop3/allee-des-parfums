@@ -1,0 +1,116 @@
+import { useLocation, useNavigate, useParams } from 'react-router'
+import { describePerfume } from '../describe.js'
+import { ACCORDS, GENDERS, MOODS, NOTE_POSITIONS } from '../labels.js'
+import { useFetch } from '../useFetch.js'
+
+export default function PerfumePage() {
+  const { id } = useParams()
+  const { data: perfume, error, loading } = useFetch(`/api/perfumes/${id}`)
+  const navigate = useNavigate()
+  const location = useLocation()
+
+  // Retour à la page précédente (la recherche), ou à l'accueil si on arrive directement ici
+  const goBack = () => (location.key === 'default' ? navigate('/') : navigate(-1))
+
+  if (loading) return <p className="text-gray-600">Chargement…</p>
+  if (error) return <p className="text-red-600">{error}</p>
+
+  const noteGroups = Object.entries(perfume.notes).filter(([, notes]) => notes.length)
+  const seasons = perfume.moods.filter((m) => m.type === 'season')
+  const occasions = perfume.moods.filter((m) => m.type === 'occasion')
+
+  return (
+    <article>
+      <button type="button" onClick={goBack} className="text-sm text-gray-600 hover:text-gray-900">
+        ← Retour
+      </button>
+
+      <div className="mt-4 grid gap-6 md:grid-cols-[16rem_1fr]">
+        <img
+          src={perfume.image_url}
+          alt={perfume.name}
+          referrerPolicy="no-referrer"
+          className="mx-auto w-48 rounded bg-white md:w-full"
+        />
+
+        <div>
+          <h1 className="text-2xl font-bold sm:text-3xl">{perfume.name}</h1>
+          <p className="text-lg text-gray-700">{perfume.brand}</p>
+          <p className="mt-1 text-sm text-gray-600">
+            {[perfume.year, GENDERS[perfume.gender], perfume.concentration]
+              .filter(Boolean)
+              .join(' · ')}
+          </p>
+          {perfume.perfumers.length > 0 && (
+            <p className="mt-1 text-sm text-gray-600">
+              Parfumeur{perfume.perfumers.length > 1 ? 's' : ''} :{' '}
+              {perfume.perfumers.map((p) => p.name).join(', ')}
+            </p>
+          )}
+
+          {noteGroups.length > 0 && (
+            <section className="mt-6">
+              <h2 className="font-semibold">Notes</h2>
+              <dl className="mt-2 space-y-2">
+                {noteGroups.map(([position, notes]) => (
+                  <div key={position} className="sm:flex sm:gap-4">
+                    <dt className="w-16 shrink-0 text-sm font-medium text-gray-500">
+                      {NOTE_POSITIONS[position]}
+                    </dt>
+                    <dd>{notes.map((n) => n.name).join(', ')}</dd>
+                  </div>
+                ))}
+              </dl>
+            </section>
+          )}
+
+          {perfume.accords.length > 0 && (
+            <section className="mt-6">
+              <h2 className="font-semibold">Accords</h2>
+              <ul className="mt-2 max-w-md space-y-1">
+                {perfume.accords.map((accord) => (
+                  <li key={accord.id} className="flex items-center gap-2 text-sm">
+                    <span className="w-32 shrink-0">{ACCORDS[accord.name] ?? accord.name}</span>
+                    <span className="h-2 flex-1 rounded bg-gray-200">
+                      <span
+                        className="block h-2 rounded bg-gray-700"
+                        style={{ width: `${accord.intensity}%` }}
+                      />
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {perfume.moods.length > 0 && (
+            <section className="mt-6">
+              <h2 className="font-semibold">Ambiances</h2>
+              <MoodList moods={seasons} />
+              <MoodList moods={occasions} />
+            </section>
+          )}
+        </div>
+      </div>
+
+      <section className="mt-8">
+        <h2 className="font-semibold">Description</h2>
+        <p className="mt-2 text-gray-700">{describePerfume(perfume)}</p>
+      </section>
+    </article>
+  )
+}
+
+// Liste de scores (part des votes) en pourcentages
+function MoodList({ moods }) {
+  if (!moods.length) return null
+  return (
+    <ul className="mt-2 flex flex-wrap gap-2 text-sm">
+      {moods.map((mood) => (
+        <li key={mood.id} className="rounded border border-gray-200 bg-white px-2 py-1">
+          {MOODS[mood.name] ?? mood.name} {Math.round(mood.score * 100)} %
+        </li>
+      ))}
+    </ul>
+  )
+}

@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.env
+
+# Dataset (trop volumineux pour git)
+data/*
+!data/.gitkeep
