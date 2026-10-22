@@ -3,7 +3,9 @@ import { useEffect, useRef, useState } from 'react'
 // Encres et traits des graphiques (palette de référence dataviz)
 export const INK = '#0b0b0b'
 export const INK_SECONDARY = '#52514e'
-export const INK_MUTED = '#898781'
+// Plus foncé que le gris « muted » de référence (#898781, contraste 3,6:1) pour atteindre
+// le contraste de 4,5:1 exigé pour du texte (graduations, légendes)
+export const INK_MUTED = '#6f6e69'
 export const GRID = '#e1e0d9'
 export const BASELINE = '#c3c2b7'
 
@@ -56,6 +58,7 @@ export function useTooltip() {
     }
     return {
       tabIndex: 0,
+      role: 'img', // une marque porte un aria-label : il lui faut un rôle
       className: 'chart-mark',
       onPointerEnter: show,
       onPointerMove: show,

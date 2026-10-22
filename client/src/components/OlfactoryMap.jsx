@@ -106,7 +106,12 @@ export default function OlfactoryMap({ points, highlight, selectedId, onSelect }
   }
 
   function recenter() {
-    select(canvasRef.current).transition().duration(400).call(zoomRef.current.transform, zoomIdentity)
+    // Pas d'animation si l'utilisateur a demandé à réduire les mouvements
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    select(canvasRef.current)
+      .transition()
+      .duration(reduceMotion ? 0 : 400)
+      .call(zoomRef.current.transform, zoomIdentity)
   }
 
   return (

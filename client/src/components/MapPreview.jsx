@@ -1,11 +1,12 @@
 import { Link } from 'react-router'
 import { ACCORDS } from '../labels.js'
 import { useFetch } from '../useFetch.js'
+import { ErrorMessage, Loading } from './Status.jsx'
 
 // Aperçu du parfum choisi sur la carte : panneau en bas de l'écran sur mobile,
 // carte en haut à droite de la carte olfactive sur grand écran
 export default function MapPreview({ perfumeId, group, onClose }) {
-  const { data: perfume, error, loading } = useFetch(`/api/perfumes/${perfumeId}`)
+  const { data: perfume, error, loading, reload } = useFetch(`/api/perfumes/${perfumeId}`)
 
   return (
     <aside
@@ -21,8 +22,8 @@ export default function MapPreview({ perfumeId, group, onClose }) {
         ×
       </button>
 
-      {loading && <p className="text-sm text-gray-600">Chargement…</p>}
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {loading && <Loading />}
+      {error && <ErrorMessage message={error} onRetry={reload} />}
       {perfume && !loading && (
         <div className="flex gap-3">
           <img

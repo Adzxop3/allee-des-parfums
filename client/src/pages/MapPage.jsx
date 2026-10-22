@@ -4,7 +4,9 @@ import FilterChips from '../components/FilterChips.jsx'
 import MapPreview from '../components/MapPreview.jsx'
 import OlfactoryMap from '../components/OlfactoryMap.jsx'
 import { MAP_GROUPS, mapGroupOf } from '../mapGroups.js'
+import { ErrorMessage, Loading } from '../components/Status.jsx'
 import { useFetch } from '../useFetch.js'
+import { usePageTitle } from '../usePageTitle.js'
 
 // Nombre de parfums affichés : les plus populaires par défaut, pour rester fluide
 const COUNTS = [
@@ -17,7 +19,8 @@ const COUNTS = [
 export default function MapPage() {
   const [params, setParams] = useSearchParams()
   const count = params.get('nombre') ?? '5000'
-  const { data, error, loading } = useFetch(`/api/map?limit=${count === 'all' ? 1000000 : count}`)
+  const { data, error, loading, reload } = useFetch(`/api/map?limit=${count === 'all' ? 1000000 : count}`)
+  usePageTitle('Carte olfactive')
 
   const [highlight, setHighlight] = useState('')
   const [selectedId, setSelectedId] = useState(null)
@@ -77,13 +80,17 @@ export default function MapPage() {
         </div>
       </div>
 
-      {error && <p className="mt-4 text-red-600">{error}</p>}
+      {error && (
+        <div className="mt-4">
+          <ErrorMessage message={error} onRetry={reload} />
+        </div>
+      )}
 
       <div className="relative mt-3 h-[65vh] min-h-[360px] overflow-hidden rounded border border-gray-200 bg-white">
         {loading && (
-          <p className="absolute top-3 left-3 z-10 rounded bg-white/90 px-2 py-1 text-sm text-gray-600">
-            Chargement…
-          </p>
+          <div className="absolute top-3 left-3 z-10 rounded bg-white/90 px-2 py-1 text-sm">
+            <Loading label="Chargement de la carte…" />
+          </div>
         )}
         <OlfactoryMap
           points={points}

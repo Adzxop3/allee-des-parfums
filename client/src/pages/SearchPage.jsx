@@ -3,7 +3,9 @@ import Pagination from '../components/Pagination.jsx'
 import PerfumeGrid from '../components/PerfumeGrid.jsx'
 import SurpriseButton from '../components/SurpriseButton.jsx'
 import { getRecentPerfumes } from '../history.js'
+import { ErrorMessage, Loading } from '../components/Status.jsx'
 import { useFetch } from '../useFetch.js'
+import { usePageTitle } from '../usePageTitle.js'
 
 const LIMIT = 24
 const surpriseClass =
@@ -16,8 +18,9 @@ export default function SearchPage() {
   const page = Number(params.get('page')) || 1
 
   const query = new URLSearchParams({ q, page, limit: LIMIT })
-  const { data, error, loading } = useFetch(`/api/perfumes?${query}`)
+  const { data, error, loading, reload } = useFetch(`/api/perfumes?${query}`)
   const hasHistory = getRecentPerfumes().length > 0
+  usePageTitle(q ? `Recherche « ${q} »` : null)
 
   function handleSubmit(event) {
     event.preventDefault()
@@ -32,8 +35,18 @@ export default function SearchPage() {
 
   return (
     <div>
-      <form onSubmit={handleSubmit} className="flex gap-2">
+      <h1 className="text-2xl font-bold">Rechercher un parfum</h1>
+      <p className="mt-1 mb-4 text-sm text-gray-600">
+        Explorez 140 000 parfums par nom ou par marque, ou parcourez-les par notes, ambiances et
+        sur la carte olfactive.
+      </p>
+
+      <form onSubmit={handleSubmit} role="search" className="flex gap-2">
+        <label htmlFor="recherche" className="sr-only">
+          Nom de parfum ou de marque
+        </label>
         <input
+          id="recherche"
           key={q}
           name="q"
           type="search"
@@ -56,7 +69,11 @@ export default function SearchPage() {
         )}
       </div>
 
-      {error && <p className="mt-6 text-red-600">{error}</p>}
+      {error && (
+        <div className="mt-6">
+          <ErrorMessage message={error} onRetry={reload} />
+        </div>
+      )}
 
       {data && (
         <>
@@ -73,7 +90,11 @@ export default function SearchPage() {
         </>
       )}
 
-      {loading && !data && <p className="mt-6 text-gray-600">Chargement…</p>}
+      {loading && !data && (
+        <div className="mt-6">
+          <Loading />
+        </div>
+      )}
     </div>
   )
 }

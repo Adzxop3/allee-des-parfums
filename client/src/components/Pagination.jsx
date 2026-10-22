@@ -4,7 +4,7 @@ export default function Pagination({ page, totalPages, onChange }) {
 
   const buttonClass = 'rounded border border-gray-300 bg-white px-3 py-1 disabled:opacity-40'
   return (
-    <div className="mt-6 flex items-center justify-center gap-4">
+    <nav aria-label="Pagination" className="mt-6 flex items-center justify-center gap-4">
       <button
         type="button"
         disabled={page <= 1}
@@ -24,6 +24,6 @@ export default function Pagination({ page, totalPages, onChange }) {
       >
         Suivant
       </button>
-    </div>
+    </nav>
   )
 }

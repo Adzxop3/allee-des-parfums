@@ -12,3 +12,9 @@
   outline: 2px solid #0b0b0b;
   outline-offset: 1px;
 }
+
+/* Focus clavier visible partout (la souris et le toucher n'affichent rien) */
+:focus-visible {
+  outline: 2px solid #0b0b0b;
+  outline-offset: 2px;
+}

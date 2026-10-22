@@ -1,27 +1,43 @@
 import { useEffect, useState } from 'react'
 
-// Charge du JSON depuis l'API ; renvoie { data, error, loading }.
+// Message lisible selon le code HTTP, quand l'API ne fournit pas le sien
+function messageForStatus(status) {
+  if (status === 404) return 'Introuvable.'
+  if (status >= 500) return 'Le serveur a rencontré un problème.'
+  return `Erreur ${status}.`
+}
+
+// Charge du JSON depuis l'API ; renvoie { data, error, loading, reload }.
 // Pendant un nouveau chargement, data garde la réponse précédente.
 export function useFetch(url) {
-  const [result, setResult] = useState({ url: null, data: null, error: null })
+  const [attempt, setAttempt] = useState(0)
+  const [result, setResult] = useState({ url: null, attempt: 0, data: null, error: null })
 
   useEffect(() => {
     const controller = new AbortController()
 
     fetch(url, { signal: controller.signal })
       .then(async (res) => {
-        const body = await res.json()
-        if (!res.ok) throw new Error(body.error ?? `Erreur ${res.status}`)
-        setResult({ url, data: body, error: null })
+        const body = await res.json().catch(() => null)
+        if (!res.ok) throw new Error(body?.error ?? messageForStatus(res.status))
+        setResult({ url, attempt, data: body, error: null })
       })
       .catch((err) => {
-        if (err.name !== 'AbortError') setResult({ url, data: null, error: err.message })
+        if (err.name === 'AbortError') return
+        // fetch échoue avec un TypeError quand le serveur est injoignable
+        const message = err instanceof TypeError ? 'Impossible de joindre le serveur.' : err.message
+        setResult({ url, attempt, data: null, error: message })
       })
 
     return () => controller.abort()
-  }, [url])
+  }, [url, attempt])
 
-  // Tant que la réponse reçue ne correspond pas à l'URL demandée, on charge
-  const loading = result.url !== url
-  return { data: result.data, error: loading ? null : result.error, loading }
+  // Tant que la réponse reçue ne correspond pas à la demande en cours, on charge
+  const loading = result.url !== url || result.attempt !== attempt
+  return {
+    data: result.data,
+    error: loading ? null : result.error,
+    loading,
+    reload: () => setAttempt((n) => n + 1),
+  }
 }

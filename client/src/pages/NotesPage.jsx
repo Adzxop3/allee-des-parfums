@@ -2,7 +2,9 @@ import { useSearchParams } from 'react-router'
 import FilterChips from '../components/FilterChips.jsx'
 import NoteChip from '../components/NoteChip.jsx'
 import { FAMILIES } from '../labels.js'
+import { ErrorMessage, Loading } from '../components/Status.jsx'
 import { useFetch } from '../useFetch.js'
+import { usePageTitle } from '../usePageTitle.js'
 
 const FAMILY_OPTIONS = [
   { value: '', label: 'Toutes' },
@@ -14,7 +16,8 @@ export default function NotesPage() {
   // La famille choisie est gardée dans l'URL (?famille=citrus)
   const [params, setParams] = useSearchParams()
   const family = params.get('famille') ?? ''
-  const { data: notes, error, loading } = useFetch(`/api/notes?family=${family}`)
+  const { data: notes, error, loading, reload } = useFetch(`/api/notes?family=${family}`)
+  usePageTitle('Notes')
 
   return (
     <div>
@@ -38,8 +41,10 @@ export default function NotesPage() {
         </p>
       )}
 
-      {error && <p className="mt-6 text-red-600">{error}</p>}
-      {loading && !notes && <p className="mt-6 text-gray-600">Chargement…</p>}
+      <div className="mt-6">
+        {error && <ErrorMessage message={error} onRetry={reload} />}
+        {loading && !notes && <Loading />}
+      </div>
 
       {notes && (
         <>

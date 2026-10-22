@@ -3,7 +3,9 @@ import FilterChips from '../components/FilterChips.jsx'
 import Pagination from '../components/Pagination.jsx'
 import PerfumeGrid from '../components/PerfumeGrid.jsx'
 import { MOOD_DESCRIPTIONS, MOODS } from '../labels.js'
+import { ErrorMessage, Loading } from '../components/Status.jsx'
 import { useFetch } from '../useFetch.js'
+import { usePageTitle } from '../usePageTitle.js'
 
 const LIMIT = 24
 
@@ -32,7 +34,8 @@ export default function AmbiancesPage() {
     if (value) query.set(filter.api, value)
   }
   const hasFilter = FILTERS.some((filter) => params.get(filter.param))
-  const { data, error, loading } = useFetch(`/api/moods/perfumes?${query}`)
+  const { data, error, loading, reload } = useFetch(`/api/moods/perfumes?${query}`)
+  usePageTitle('Ambiances')
 
   // Changer un filtre ramène à la première page
   function select(param, value) {
@@ -81,8 +84,10 @@ export default function AmbiancesPage() {
         </p>
       )}
 
-      {error && <p className="mt-6 text-red-600">{error}</p>}
-      {loading && !data && <p className="mt-6 text-gray-600">Chargement…</p>}
+      <div className="mt-6">
+        {error && <ErrorMessage message={error} onRetry={reload} />}
+        {loading && !data && <Loading />}
+      </div>
 
       {data && (
         <>

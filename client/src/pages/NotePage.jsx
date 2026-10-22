@@ -3,7 +3,9 @@ import NoteChip from '../components/NoteChip.jsx'
 import Pagination from '../components/Pagination.jsx'
 import PerfumeGrid from '../components/PerfumeGrid.jsx'
 import { FAMILIES } from '../labels.js'
+import { ErrorMessage, Loading } from '../components/Status.jsx'
 import { useFetch } from '../useFetch.js'
+import { usePageTitle } from '../usePageTitle.js'
 
 const LIMIT = 24
 
@@ -12,11 +14,12 @@ export default function NotePage() {
   const [params, setParams] = useSearchParams()
   const page = Number(params.get('page')) || 1
 
-  const { data: note, error, loading } = useFetch(`/api/notes/${id}`)
+  const { data: note, error, loading, reload } = useFetch(`/api/notes/${id}`)
   const perfumes = useFetch(`/api/notes/${id}/perfumes?page=${page}&limit=${LIMIT}`)
+  usePageTitle(note && !loading ? note.name : null)
 
-  if (loading) return <p className="text-gray-600">Chargement…</p>
-  if (error) return <p className="text-red-600">{error}</p>
+  if (loading) return <Loading />
+  if (error) return <ErrorMessage message={error} onRetry={reload} />
 
   function goToPage(newPage) {
     setParams({ page: newPage })
@@ -57,8 +60,8 @@ export default function NotePage() {
 
       <section className="mt-8">
         <h2 className="mb-3 font-semibold">Parfums avec cette note (les plus populaires d'abord)</h2>
-        {perfumes.error && <p className="text-red-600">{perfumes.error}</p>}
-        {perfumes.loading && !perfumes.data && <p className="text-gray-600">Chargement…</p>}
+        {perfumes.error && <ErrorMessage message={perfumes.error} onRetry={perfumes.reload} />}
+        {perfumes.loading && !perfumes.data && <Loading />}
         {perfumes.data && (
           <>
             <PerfumeGrid perfumes={perfumes.data.results} dimmed={perfumes.loading} />

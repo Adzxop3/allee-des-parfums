@@ -30,8 +30,7 @@ export default function TopNotesChart({ notes }) {
               <g
                 key={note.id}
                 {...bind({ value: `${formatInt(note.perfume_count)} parfums`, label: note.name, color: COLOR })}
-                role="link"
-                aria-label={`${note.name} : ${formatInt(note.perfume_count)} parfums`}
+                role="link" // nom accessible = texte de la ligne (note et nombre de parfums)
                 onClick={() => navigate(`/notes/${note.id}`)}
                 onKeyDown={(event) => event.key === 'Enter' && navigate(`/notes/${note.id}`)}
               >

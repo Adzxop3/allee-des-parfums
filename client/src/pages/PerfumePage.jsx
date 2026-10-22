@@ -3,13 +3,16 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router'
 import { addRecentPerfume } from '../history.js'
 import { describePerfume } from '../describe.js'
 import { ACCORDS, GENDERS, MOODS, NOTE_POSITIONS } from '../labels.js'
+import { ErrorMessage, Loading } from '../components/Status.jsx'
 import { useFetch } from '../useFetch.js'
+import { usePageTitle } from '../usePageTitle.js'
 
 export default function PerfumePage() {
   const { id } = useParams()
-  const { data: perfume, error, loading } = useFetch(`/api/perfumes/${id}`)
+  const { data: perfume, error, loading, reload } = useFetch(`/api/perfumes/${id}`)
   const navigate = useNavigate()
   const location = useLocation()
+  usePageTitle(perfume && !loading ? `${perfume.name}${perfume.brand ? ` (${perfume.brand})` : ''}` : null)
 
   // Mémorise la consultation (sert au bouton « Surprends-moi »)
   useEffect(() => {
@@ -19,11 +22,11 @@ export default function PerfumePage() {
   // Retour à la page précédente (la recherche), ou à l'accueil si on arrive directement ici
   const goBack = () => (location.key === 'default' ? navigate('/') : navigate(-1))
 
-  if (loading) return <p className="text-gray-600">Chargement…</p>
-  if (error) return <p className="text-red-600">{error}</p>
+  if (loading) return <Loading />
+  if (error) return <ErrorMessage message={error} onRetry={reload} />
 
   const surprise = location.state?.surprise
-  const noteGroups =Object.entries(perfume.notes).filter(([, notes]) => notes.length)
+  const noteGroups = Object.entries(perfume.notes).filter(([, notes]) => notes.length)
   const seasons = perfume.moods.filter((m) => m.type === 'season')
   const occasions = perfume.moods.filter((m) => m.type === 'occasion')
 

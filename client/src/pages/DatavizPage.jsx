@@ -9,6 +9,7 @@ import FilterChips from '../components/FilterChips.jsx'
 import { ACCORDS, FAMILIES, GENDERS } from '../labels.js'
 import { MAP_GROUPS, mapGroupOf } from '../mapGroups.js'
 import { useFetch } from '../useFetch.js'
+import { usePageTitle } from '../usePageTitle.js'
 
 // Mêmes couleurs que la carte (la couleur suit la famille), mais rangées pour que
 // deux couleurs proches (rouge et rose) ne se touchent pas dans les colonnes empilées
@@ -41,6 +42,7 @@ function toColumns(rows, keyOf) {
 const shareIn = (column, key) => (column ? (column.counts[key] ?? 0) / column.total : 0)
 
 export default function DatavizPage() {
+  usePageTitle('Les parfums en chiffres')
   return (
     <div>
       <h1 className="text-2xl font-bold">Les parfums en chiffres</h1>

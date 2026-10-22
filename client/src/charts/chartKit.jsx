@@ -1,3 +1,5 @@
+import { ErrorMessage, Loading } from '../components/Status.jsx'
+
 // Contenu : { value, label, color } — la valeur d'abord, le libellé ensuite
 export function ChartTooltip({ tip, width }) {
   if (!tip) return null
@@ -41,8 +43,8 @@ export function ChartCard({ title, subtitle, children, note, table, state }) {
       <h2 className="text-lg font-semibold leading-snug">{title}</h2>
       {subtitle && <p className="mt-1 text-sm text-gray-600">{subtitle}</p>}
       <div className="mt-4">
-        {state?.error && <p className="text-red-600">{state.error}</p>}
-        {state?.loading && !state.data && <p className="text-gray-600">Chargement…</p>}
+        {state?.error && <ErrorMessage message={state.error} onRetry={state.reload} />}
+        {state?.loading && !state.data && <Loading />}
         {children}
       </div>
       {note && <p className="mt-3 text-xs text-gray-500">{note}</p>}
