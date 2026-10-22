@@ -4,7 +4,7 @@ import { ChartCard, DataTable } from '../charts/chartKit.jsx'
 import { formatInt, formatLean, formatPercent } from '../charts/chartUtils.js'
 import SeasonAccordsChart from '../charts/SeasonAccordsChart.jsx'
 import StackedColumns from '../charts/StackedColumns.jsx'
-import TopNotesChart from '../charts/TopNotesChart.jsx'
+import BarList from '../charts/BarList.jsx'
 import FilterChips from '../components/FilterChips.jsx'
 import { ACCORDS, FAMILIES, GENDERS } from '../labels.js'
 import { MAP_GROUPS, mapGroupOf } from '../mapGroups.js'
@@ -88,7 +88,10 @@ function TopNotesSection() {
         />
       </div>
       <div className={state.loading ? 'opacity-50' : ''}>
-        <TopNotesChart notes={notes} />
+        <BarList
+          items={notes.map((n) => ({ key: n.id, label: n.name, value: n.perfume_count, href: `/notes/${n.id}` }))}
+          formatValue={formatInt}
+        />
       </div>
     </ChartCard>
   )

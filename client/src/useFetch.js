@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { signalUnauthorized } from './api.js'
 
 // Message lisible selon le code HTTP, quand l'API ne fournit pas le sien
 function messageForStatus(status) {
@@ -19,6 +20,7 @@ export function useFetch(url) {
     fetch(url, { signal: controller.signal })
       .then(async (res) => {
         const body = await res.json().catch(() => null)
+        if (res.status === 401) signalUnauthorized()
         if (!res.ok) throw new Error(body?.error ?? messageForStatus(res.status))
         setResult({ url, attempt, data: body, error: null })
       })

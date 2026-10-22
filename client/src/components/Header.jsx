@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Link, NavLink } from 'react-router'
+import { Link, NavLink, useLocation } from 'react-router'
+import { useAuth } from '../auth/AuthContext.js'
 import SurpriseButton from './SurpriseButton.jsx'
+import UserMenu from './UserMenu.jsx'
 
 const SECTIONS = [
   { to: '/', label: 'Recherche', end: true },
@@ -8,6 +10,7 @@ const SECTIONS = [
   { to: '/ambiances', label: 'Ambiances' },
   { to: '/carte', label: 'Carte' },
   { to: '/chiffres', label: 'En chiffres' },
+  { to: '/questionnaire', label: 'Questionnaire' },
 ]
 
 // En-tête : liens visibles sur grand écran, bouton « Menu » sur mobile.
@@ -55,7 +58,10 @@ export default function Header() {
           </ul>
         </nav>
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-4">
+          <div className="hidden md:block">
+            <UserMenu />
+          </div>
           <SurpriseButton className="rounded-full bg-gray-900 px-3 py-1.5 text-sm text-white disabled:opacity-60">
             Surprends-moi
           </SurpriseButton>
@@ -92,8 +98,50 @@ export default function Header() {
               </li>
             ))}
           </ul>
+          <MobileAccount />
         </nav>
       )}
     </header>
+  )
+}
+
+// Compte dans le menu mobile : connexion / inscription, ou nom et déconnexion
+function MobileAccount() {
+  const { user, checking, logout } = useAuth()
+  const location = useLocation()
+  if (checking) return null
+
+  return (
+    <div className="mx-auto max-w-6xl border-t border-gray-200 px-4 py-2">
+      {user ? (
+        <>
+          <p className="py-2 text-sm text-gray-600">
+            Connecté : <span className="font-medium text-gray-900">{user.displayName}</span>
+          </p>
+          <Link to="/parfumotheque" className="block py-3 text-gray-700">
+            Ma parfumothèque
+          </Link>
+          <Link to="/compte" className="block py-3 text-gray-700">
+            Mon compte
+          </Link>
+          <button type="button" onClick={logout} className="block w-full py-3 text-left text-gray-700">
+            Se déconnecter
+          </button>
+        </>
+      ) : (
+        <ul>
+          <li>
+            <Link to="/connexion" state={{ from: location.pathname + location.search }} className="block py-3 text-gray-700">
+              Connexion
+            </Link>
+          </li>
+          <li>
+            <Link to="/inscription" state={{ from: location.pathname + location.search }} className="block py-3 text-gray-700">
+              Créer un compte
+            </Link>
+          </li>
+        </ul>
+      )}
+    </div>
   )
 }

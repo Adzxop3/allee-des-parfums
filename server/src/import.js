@@ -35,6 +35,13 @@ function createDictionary() {
   }
 }
 
+// Moyenne d'un vote (tenue, sillage), seulement s'il y a assez de votants pour être fiable
+const MIN_INTENSITY_VOTES = 5
+function voteAverage(vote) {
+  const voters = (vote?.histogram ?? []).reduce((sum, bucket) => sum + bucket.count, 0)
+  return voters >= MIN_INTENSITY_VOTES ? (vote.average ?? null) : null
+}
+
 // Répartition des votes en parts (0 à 1) ; rien si aucun vote
 function shares(type, votes) {
   const total = Object.values(votes ?? {}).reduce((sum, n) => sum + n, 0)
@@ -80,6 +87,8 @@ for await (const line of readLines(file)) {
     imageUrl: clean(d.picture),
     ratingCount,
     ratingAvg: ratingCount > 0 ? (d.rating?.average ?? null) : null,
+    longevity: voteAverage(d.longevity),
+    sillage: voteAverage(d.sillage),
     perfumerKeys: new Set(),
     notes: new Map(), // "position|note" -> [position, note, poids]
     accords: new Map(), // accord -> intensité
@@ -168,16 +177,18 @@ try {
   const moodIds = new Map(moodRows.map((r) => [`${r.type}|${r.name}`, r.id]))
 
   await insertRows(
-    `INSERT INTO perfumes (id, name, brand_id, year, gender, description, image_url, rating_count, rating_avg)
+    `INSERT INTO perfumes (id, name, brand_id, year, gender, description, image_url, rating_count, rating_avg,
+                           longevity, sillage)
      SELECT * FROM unnest($1::int[], $2::text[], $3::int[], $4::smallint[], $5::text[], $6::text[], $7::text[],
-                          $8::int[], $9::real[])
+                          $8::int[], $9::real[], $10::real[], $11::real[])
      ON CONFLICT (id) DO UPDATE SET
        name = EXCLUDED.name, brand_id = EXCLUDED.brand_id, year = EXCLUDED.year,
        gender = EXCLUDED.gender, description = EXCLUDED.description, image_url = EXCLUDED.image_url,
-       rating_count = EXCLUDED.rating_count, rating_avg = EXCLUDED.rating_avg`,
+       rating_count = EXCLUDED.rating_count, rating_avg = EXCLUDED.rating_avg,
+       longevity = EXCLUDED.longevity, sillage = EXCLUDED.sillage`,
     perfumes.map((p) => [
       p.id, p.name, brandIds.get(p.brandKey) ?? null, p.year, p.gender, p.description, p.imageUrl,
-      p.ratingCount, p.ratingAvg,
+      p.ratingCount, p.ratingAvg, p.longevity, p.sillage,
     ]),
   )
 

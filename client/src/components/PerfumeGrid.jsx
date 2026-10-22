@@ -30,6 +30,7 @@ export default function PerfumeGrid({ perfumes, dimmed = false }) {
                 Correspondance {Math.round(perfume.score * 100)} %
               </p>
             )}
+            {perfume.explanation && <p className="mt-1 text-xs text-gray-600">{perfume.explanation}</p>}
           </Link>
         </li>
       ))}

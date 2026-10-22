@@ -18,7 +18,14 @@ export const FAMILIES = {
   other: 'Insolites',
 }
 
-export const NOTE_POSITIONS ={ top: 'Tête', heart: 'Cœur', base: 'Fond', flat: 'Notes' }
+export const NOTE_POSITIONS = { top: 'Tête', heart: 'Cœur', base: 'Fond', flat: 'Notes' }
+
+// Parfumothèque : statut d'un parfum (bouton sur la fiche) et onglets de la page
+export const COLLECTION_STATUSES = {
+  owned: { action: "Je l'ai", tab: 'Mes parfums' },
+  wishlist: { action: "J'en ai envie", tab: 'Mes envies' },
+  tested: { action: "Je l'ai testé", tab: 'Testés' },
+}
 
 export const ACCORDS = {
   alcohol: 'alcool',

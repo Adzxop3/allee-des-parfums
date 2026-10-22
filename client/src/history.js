@@ -12,6 +12,14 @@ export function getRecentPerfumes() {
   }
 }
 
+export function clearRecentPerfumes() {
+  try {
+    localStorage.removeItem(KEY)
+  } catch {
+    // stockage indisponible : rien à effacer
+  }
+}
+
 export function addRecentPerfume(id) {
   try {
     const list = [id, ...getRecentPerfumes().filter((other) => other !== id)].slice(0, MAX)

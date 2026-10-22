@@ -75,6 +75,25 @@ Pour vérifier la connexion : http://localhost:3001/api/health
 
 | Route | Description |
 |---|---|
+| `POST /api/auth/register` | Inscription `{ email, password, displayName }` (connecte aussitôt) |
+| `POST /api/auth/login` | Connexion `{ email, password }` (5 échecs max par compte et 20 par adresse IP en 15 min) |
+| `POST /api/auth/logout` | Déconnexion |
+| `GET /api/auth/me` | Utilisateur connecté (401 sinon) |
+| `POST /api/auth/verify-email` | Confirme l'adresse email `{ token }` (lien envoyé à l'inscription, valable 24 h) |
+| `POST /api/auth/resend-verification` | Renvoie l'email de confirmation (3 par heure) |
+| `POST /api/auth/forgot-password` | Envoie un lien de réinitialisation `{ email }` (même réponse que le compte existe ou non) |
+| `POST /api/auth/reset-password` | Nouveau mot de passe `{ token, password }` (lien valable 1 h, déconnecte toutes les sessions) |
+| `DELETE /api/auth/account` | Supprime le compte et toutes ses données `{ password }` (5 essais par 15 min) |
+| `GET /api/collection?status=` | Ma parfumothèque (`owned`, `wishlist`, `tested`) et le nombre de parfums par statut — email confirmé requis, comme toutes les routes `/api/collection` |
+| `GET /api/collection/summary?status=` | Notes et accords les plus présents dans ma collection |
+| `GET /api/collection/recommendations` | Parfums proches de ceux que j'ai notés 4 ou 5 étoiles (hors collection) |
+| `GET /api/collection/:perfumeId` | Ce parfum est-il dans ma collection ? |
+| `POST /api/collection` | Ajouter `{ perfumeId, status, rating?, personalNote? }` |
+| `PATCH /api/collection/:perfumeId` | Modifier `{ status?, rating?, personalNote? }` (note de 1 à 5 ou `null`) |
+| `DELETE /api/collection/:perfumeId` | Retirer un parfum |
+| `POST /api/recommendations` | Parfums recommandés selon les réponses au questionnaire, avec score et explication (sans compte) |
+| `GET /api/recommendations/options` | Exemples de parfums connus pour chaque grande famille |
+| `GET` / `PUT /api/recommendations/preferences` | Mes réponses sauvegardées (email confirmé requis) |
 | `GET /api/perfumes?q=&page=&limit=` | Liste paginée (20 par défaut, 100 max), recherche dans le nom du parfum et de la marque |
 | `GET /api/perfumes/:id` | Fiche complète : marque, parfumeurs, notes par étage, accords, ambiances |
 | `GET /api/perfumes/:id/neighbors?limit=` | Parfums les plus ressemblants (12 au maximum) |
@@ -89,4 +108,8 @@ Pour vérifier la connexion : http://localhost:3001/api/health
 | `GET /api/stats/season-accords` | Écart été − hiver des votes, par accord |
 | `GET /api/stats/brand-accords` | Accords signatures des 12 marques les plus populaires |
 
-Les statistiques sont calculées au premier appel puis gardées en mémoire : redémarrer le serveur après un import.
+La connexion repose sur une session stockée en base et un cookie `httpOnly` / `sameSite=Lax` (`secure` quand `NODE_ENV=production`). Les mots de passe sont hachés avec argon2id.
+
+Les emails (confirmation d'adresse, mot de passe oublié) partent par SMTP : renseigner `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` et `APP_URL` dans `server/.env` (voir `.env.example`). **Sans `SMTP_HOST`, les emails sont affichés dans le terminal du serveur**, lien compris : pratique pour tester en local.
+
+Les statistiques et les données du questionnaire sont calculées au premier appel puis gardées en mémoire : redémarrer le serveur après un import.

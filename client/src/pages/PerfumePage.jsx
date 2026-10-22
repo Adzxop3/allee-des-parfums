@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router'
 import { addRecentPerfume } from '../history.js'
 import { describePerfume } from '../describe.js'
 import { ACCORDS, GENDERS, MOODS, NOTE_POSITIONS } from '../labels.js'
+import CollectionControl from '../components/CollectionControl.jsx'
 import { ErrorMessage, Loading } from '../components/Status.jsx'
 import { useFetch } from '../useFetch.js'
 import { usePageTitle } from '../usePageTitle.js'
@@ -75,6 +76,11 @@ export default function PerfumePage() {
               {perfume.perfumers.map((p) => p.name).join(', ')}
             </p>
           )}
+
+          {/* key : l'état repart de zéro quand on passe d'un parfum à un autre */}
+          <div className="mt-4">
+            <CollectionControl key={perfume.id} perfumeId={perfume.id} />
+          </div>
 
           {noteGroups.length > 0 && (
             <section className="mt-6">

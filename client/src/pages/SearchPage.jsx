@@ -1,4 +1,4 @@
-import { useSearchParams } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import Pagination from '../components/Pagination.jsx'
 import PerfumeGrid from '../components/PerfumeGrid.jsx'
 import SurpriseButton from '../components/SurpriseButton.jsx'
@@ -61,6 +61,9 @@ export default function SearchPage() {
 
       <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
         <span className="text-gray-600">Pas d'idée ?</span>
+        <Link to="/questionnaire" className={surpriseClass}>
+          Faire le questionnaire
+        </Link>
         <SurpriseButton similar={false} className={surpriseClass}>
           Un parfum au hasard
         </SurpriseButton>
