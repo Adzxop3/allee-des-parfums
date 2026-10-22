@@ -1,5 +1,7 @@
 import { createReadStream } from 'node:fs'
 import { pool } from './db.js'
+import { ACCORD_FAMILIES, NOTE_FAMILY_OVERRIDES } from './families.js'
+import { MOOD_ACCORDS } from './moods.js'
 
 // Usage : npm run import [chemin/vers/perfumes.jsonl]
 const file = process.argv[2] ?? new URL('../../data/perfumes.jsonl', import.meta.url)
@@ -67,6 +69,7 @@ for await (const line of readLines(file)) {
   if (!name) continue
 
   const brand = clean(d.brand)
+  const ratingCount = d.people ?? 0
   const perfume = {
     id: d.id,
     name,
@@ -75,8 +78,10 @@ for await (const line of readLines(file)) {
     gender: clean(d.gender),
     description: clean(d.description),
     imageUrl: clean(d.picture),
+    ratingCount,
+    ratingAvg: ratingCount > 0 ? (d.rating?.average ?? null) : null,
     perfumerKeys: new Set(),
-    notes: new Map(), // "position|note" -> [position, note]
+    notes: new Map(), // "position|note" -> [position, note, poids]
     accords: new Map(), // accord -> intensité
     moods: [...shares('season', d.seasons), ...shares('occasion', d.daypart)],
   }
@@ -96,7 +101,7 @@ for await (const line of readLines(file)) {
       const n = clean(note.name)
       if (!n) continue
       const key = notes.add(n)
-      perfume.notes.set(`${position}|${key}`, [position, key])
+      perfume.notes.set(`${position}|${key}`, [position, key, note.weight ?? null])
     }
   }
 
@@ -141,6 +146,15 @@ try {
   const noteIds = await upsertNames('notes', notes.names())
   const accordIds = await upsertNames('accords', accords.names())
 
+  const accordFamilies = Object.entries(ACCORD_FAMILIES).flatMap(([family, names]) =>
+    names.map((name) => [name, family]),
+  )
+  await client.query(
+    `UPDATE accords a SET family = v.family
+     FROM unnest($1::text[], $2::text[]) AS v(name, family) WHERE a.name = v.name`,
+    [accordFamilies.map(([name]) => name), accordFamilies.map(([, family]) => family)],
+  )
+
   const moodList = [
     ...['winter', 'spring', 'summer', 'autumn'].map((name) => ['season', name]),
     ...['day', 'night'].map((name) => ['occasion', name]),
@@ -154,13 +168,16 @@ try {
   const moodIds = new Map(moodRows.map((r) => [`${r.type}|${r.name}`, r.id]))
 
   await insertRows(
-    `INSERT INTO perfumes (id, name, brand_id, year, gender, description, image_url)
-     SELECT * FROM unnest($1::int[], $2::text[], $3::int[], $4::smallint[], $5::text[], $6::text[], $7::text[])
+    `INSERT INTO perfumes (id, name, brand_id, year, gender, description, image_url, rating_count, rating_avg)
+     SELECT * FROM unnest($1::int[], $2::text[], $3::int[], $4::smallint[], $5::text[], $6::text[], $7::text[],
+                          $8::int[], $9::real[])
      ON CONFLICT (id) DO UPDATE SET
        name = EXCLUDED.name, brand_id = EXCLUDED.brand_id, year = EXCLUDED.year,
-       gender = EXCLUDED.gender, description = EXCLUDED.description, image_url = EXCLUDED.image_url`,
+       gender = EXCLUDED.gender, description = EXCLUDED.description, image_url = EXCLUDED.image_url,
+       rating_count = EXCLUDED.rating_count, rating_avg = EXCLUDED.rating_avg`,
     perfumes.map((p) => [
       p.id, p.name, brandIds.get(p.brandKey) ?? null, p.year, p.gender, p.description, p.imageUrl,
+      p.ratingCount, p.ratingAvg,
     ]),
   )
 
@@ -171,10 +188,11 @@ try {
   )
 
   await insertRows(
-    `INSERT INTO perfume_notes (perfume_id, note_id, position)
-     SELECT * FROM unnest($1::int[], $2::int[], $3::text[]) ON CONFLICT DO NOTHING`,
+    `INSERT INTO perfume_notes (perfume_id, note_id, position, weight)
+     SELECT * FROM unnest($1::int[], $2::int[], $3::text[], $4::smallint[])
+     ON CONFLICT (perfume_id, note_id, position) DO UPDATE SET weight = EXCLUDED.weight`,
     perfumes.flatMap((p) =>
-      [...p.notes.values()].map(([position, key]) => [p.id, noteIds.get(key), position]),
+      [...p.notes.values()].map(([position, key, weight]) => [p.id, noteIds.get(key), position, weight]),
     ),
   )
 
@@ -204,11 +222,89 @@ try {
   client.release()
 }
 
+// 3. Données dérivées des notes
+
+await pool.query(`
+  UPDATE notes n SET perfume_count =
+    (SELECT count(DISTINCT perfume_id) FROM perfume_notes WHERE note_id = n.id)`)
+
+// Famille d'une note : famille de l'accord le plus sur-représenté dans les parfums qui la contiennent
+// (intensité moyenne de l'accord dans ces parfums / intensité moyenne dans tous les parfums).
+// Les notes trop rares (moins de 10 parfums) restent sans famille.
+await pool.query(`
+  WITH total AS (SELECT count(DISTINCT perfume_id)::real AS n FROM perfume_accords),
+  accord_avg AS (
+    SELECT accord_id, sum(intensity) / (SELECT n FROM total) AS avg_all
+    FROM perfume_accords GROUP BY accord_id
+  ),
+  note_perfumes AS (SELECT DISTINCT note_id, perfume_id FROM perfume_notes),
+  note_accord_avg AS (
+    SELECT np.note_id, pa.accord_id, sum(pa.intensity) / max(n.perfume_count) AS avg_note
+    FROM note_perfumes np
+    JOIN notes n ON n.id = np.note_id AND n.perfume_count >= 10
+    JOIN perfume_accords pa ON pa.perfume_id = np.perfume_id
+    GROUP BY np.note_id, pa.accord_id
+  ),
+  best AS MATERIALIZED (
+    SELECT DISTINCT ON (na.note_id) na.note_id, a.family
+    FROM note_accord_avg na
+    JOIN accord_avg aa ON aa.accord_id = na.accord_id
+    JOIN accords a ON a.id = na.accord_id
+    WHERE na.avg_note >= 15
+    ORDER BY na.note_id, na.avg_note / aa.avg_all DESC
+  )
+  UPDATE notes n SET family = (SELECT family FROM best WHERE best.note_id = n.id)`)
+
+await pool.query(
+  `UPDATE notes n SET family = v.family
+   FROM unnest($1::text[], $2::text[]) AS v(name, family) WHERE n.name = v.name`,
+  [Object.keys(NOTE_FAMILY_OVERRIDES), Object.values(NOTE_FAMILY_OVERRIDES)],
+)
+
+// 4. Humeurs déduites des accords (voir moods.js).
+// Les anciens scores sont remplacés, dans une transaction, pour suivre les changements de poids.
+
+const moodWeights = Object.entries(MOOD_ACCORDS).flatMap(([mood, accordWeights]) =>
+  Object.entries(accordWeights).map(([accord, weight]) => [mood, accord, weight]),
+)
+const moodClient = await pool.connect()
+try {
+  await moodClient.query('BEGIN')
+  await moodClient.query(
+    `INSERT INTO moods (type, name) SELECT 'mood', unnest($1::text[]) ON CONFLICT (type, name) DO NOTHING`,
+    [Object.keys(MOOD_ACCORDS)],
+  )
+  await moodClient.query(
+    `DELETE FROM perfume_moods WHERE mood_id IN (SELECT id FROM moods WHERE type = 'mood')`,
+  )
+  await moodClient.query(
+    `INSERT INTO perfume_moods (perfume_id, mood_id, score)
+     WITH weights AS (
+       SELECT * FROM unnest($1::text[], $2::text[], $3::real[]) AS w(mood, accord, weight)
+     ),
+     totals AS (SELECT perfume_id, sum(intensity) AS total FROM perfume_accords GROUP BY perfume_id)
+     SELECT pa.perfume_id, m.id, sum(w.weight * pa.intensity) / max(t.total)
+     FROM perfume_accords pa
+     JOIN accords a ON a.id = pa.accord_id
+     JOIN weights w ON w.accord = a.name
+     JOIN moods m ON m.type = 'mood' AND m.name = w.mood
+     JOIN totals t ON t.perfume_id = pa.perfume_id
+     GROUP BY pa.perfume_id, m.id`,
+    [moodWeights.map((w) => w[0]), moodWeights.map((w) => w[1]), moodWeights.map((w) => w[2])],
+  )
+  await moodClient.query('COMMIT')
+} catch (err) {
+  await moodClient.query('ROLLBACK')
+  throw err
+} finally {
+  moodClient.release()
+}
+
 // Met à jour les statistiques de PostgreSQL après un gros import
 // (sans cela, les requêtes de l'API n'utilisent pas toujours les bons index)
 await pool.query('VACUUM ANALYZE')
 
-// 3. Comptages par table
+// 5. Comptages par table
 
 const tables = [
   'brands', 'perfumers', 'perfumes', 'perfume_perfumers', 'notes',

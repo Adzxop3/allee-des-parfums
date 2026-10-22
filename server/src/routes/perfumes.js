@@ -34,6 +34,60 @@ router.get('/', async (req, res) => {
   res.json({ page, limit, total: countRows[0].total, results: rows })
 })
 
+// GET /api/perfumes/random?near=12,34
+// Sans near : un parfum au hasard parmi les parfums assez votés (fiches complètes).
+// Avec near (derniers parfums consultés) : un voisin de l'un d'eux, jamais déjà consulté.
+// Déclarée avant /:id, sinon "random" serait pris pour un identifiant.
+router.get('/random', async (req, res) => {
+  const near = String(req.query.near ?? '')
+    .split(',')
+    .map(parseId)
+    .filter(Boolean)
+    .slice(0, 10)
+
+  if (near.length) {
+    const { rows } = await pool.query(
+      `SELECT nb.neighbor_id AS id, p.id AS near_id, p.name AS near_name
+       FROM perfume_neighbors nb JOIN perfumes p ON p.id = nb.perfume_id
+       WHERE nb.perfume_id = ANY($1) AND NOT nb.neighbor_id = ANY($1)
+       ORDER BY random()
+       LIMIT 1`,
+      [near],
+    )
+    if (rows.length) {
+      return res.json({ id: rows[0].id, similarTo: { id: rows[0].near_id, name: rows[0].near_name } })
+    }
+  }
+
+  const { rows } = await pool.query(
+    'SELECT id FROM perfumes WHERE rating_count >= 100 ORDER BY random() LIMIT 1',
+  )
+  res.json({ id: rows[0].id, similarTo: null })
+})
+
+// GET /api/perfumes/:id/neighbors?limit=
+// Parfums les plus ressemblants (accords + notes), précalculés par precompute/build_map.py
+router.get('/:id/neighbors', async (req, res) => {
+  const id = parseId(req.params.id)
+  if (!id) return res.status(400).json({ error: 'Identifiant invalide' })
+  const limit = Math.min(12, Math.max(1, Number.parseInt(req.query.limit, 10) || 12))
+
+  const { rows: exists } = await pool.query('SELECT 1 FROM perfumes WHERE id = $1', [id])
+  if (!exists.length) return res.status(404).json({ error: 'Parfum introuvable' })
+
+  const { rows } = await pool.query(
+    `SELECT p.id, p.name, b.name AS brand, p.year, p.gender, p.image_url, nb.similarity
+     FROM perfume_neighbors nb
+     JOIN perfumes p ON p.id = nb.neighbor_id
+     LEFT JOIN brands b ON b.id = p.brand_id
+     WHERE nb.perfume_id = $1
+     ORDER BY nb.similarity DESC
+     LIMIT $2`,
+    [id, limit],
+  )
+  res.json(rows)
+})
+
 // GET /api/perfumes/:id
 router.get('/:id', async (req, res) => {
   const id = parseId(req.params.id)
@@ -59,7 +113,7 @@ router.get('/:id', async (req, res) => {
     pool.query(
       `SELECT n.id, n.name, n.family, pn.position FROM perfume_notes pn
        JOIN notes n ON n.id = pn.note_id
-       WHERE pn.perfume_id = $1 ORDER BY n.name`,
+       WHERE pn.perfume_id = $1 ORDER BY pn.weight DESC NULLS LAST, n.name`,
       [id],
     ),
     pool.query(

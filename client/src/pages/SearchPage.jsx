@@ -1,8 +1,13 @@
-import { Link, useSearchParams } from 'react-router'
-import { GENDERS } from '../labels.js'
+import { useSearchParams } from 'react-router'
+import Pagination from '../components/Pagination.jsx'
+import PerfumeGrid from '../components/PerfumeGrid.jsx'
+import SurpriseButton from '../components/SurpriseButton.jsx'
+import { getRecentPerfumes } from '../history.js'
 import { useFetch } from '../useFetch.js'
 
 const LIMIT = 24
+const surpriseClass =
+  'rounded-full border border-gray-300 bg-white px-3 py-1 hover:border-gray-500 disabled:opacity-60'
 
 export default function SearchPage() {
   // La recherche et la page sont gardées dans l'URL (partageable, bouton retour)
@@ -12,7 +17,7 @@ export default function SearchPage() {
 
   const query = new URLSearchParams({ q, page, limit: LIMIT })
   const { data, error, loading } = useFetch(`/api/perfumes?${query}`)
-  const totalPages = data ? Math.max(1, Math.ceil(data.total / LIMIT)) : 1
+  const hasHistory = getRecentPerfumes().length > 0
 
   function handleSubmit(event) {
     event.preventDefault()
@@ -41,64 +46,30 @@ export default function SearchPage() {
         </button>
       </form>
 
+      <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+        <span className="text-gray-600">Pas d'idée ?</span>
+        <SurpriseButton similar={false} className={surpriseClass}>
+          Un parfum au hasard
+        </SurpriseButton>
+        {hasHistory && (
+          <SurpriseButton className={surpriseClass}>Un parfum proche de mes dernières visites</SurpriseButton>
+        )}
+      </div>
+
       {error && <p className="mt-6 text-red-600">{error}</p>}
 
       {data && (
         <>
-          <p className="mt-4 text-sm text-gray-600">
+          <p className="mt-4 mb-4 text-sm text-gray-600">
             {data.total.toLocaleString('fr-FR')} parfum{data.total > 1 ? 's' : ''}
             {q && <> pour « {q} »</>}
           </p>
-
-          <ul
-            className={`mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 ${loading ? 'opacity-50' : ''}`}
-          >
-            {data.results.map((perfume) => (
-              <li key={perfume.id}>
-                <Link
-                  to={`/perfumes/${perfume.id}`}
-                  className="block h-full rounded border border-gray-200 bg-white p-3 hover:border-gray-400"
-                >
-                  <img
-                    src={perfume.image_url}
-                    alt=""
-                    loading="lazy"
-                    referrerPolicy="no-referrer"
-                    className="aspect-[3/4] w-full object-contain"
-                  />
-                  <p className="mt-2 font-medium leading-tight">{perfume.name}</p>
-                  <p className="text-sm text-gray-600">{perfume.brand}</p>
-                  <p className="text-xs text-gray-500">
-                    {[perfume.year, GENDERS[perfume.gender]].filter(Boolean).join(' · ')}
-                  </p>
-                </Link>
-              </li>
-            ))}
-          </ul>
-
-          {data.total > LIMIT && (
-            <div className="mt-6 flex items-center justify-center gap-4">
-              <button
-                type="button"
-                disabled={page <= 1}
-                onClick={() => goToPage(page - 1)}
-                className="rounded border border-gray-300 bg-white px-3 py-1 disabled:opacity-40"
-              >
-                Précédent
-              </button>
-              <span className="text-sm">
-                Page {page} / {totalPages}
-              </span>
-              <button
-                type="button"
-                disabled={page >= totalPages}
-                onClick={() => goToPage(page + 1)}
-                className="rounded border border-gray-300 bg-white px-3 py-1 disabled:opacity-40"
-              >
-                Suivant
-              </button>
-            </div>
-          )}
+          <PerfumeGrid perfumes={data.results} dimmed={loading} />
+          <Pagination
+            page={page}
+            totalPages={Math.ceil(data.total / LIMIT)}
+            onChange={goToPage}
+          />
         </>
       )}
 

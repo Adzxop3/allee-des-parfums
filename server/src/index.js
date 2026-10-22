@@ -1,5 +1,8 @@
 import express from 'express'
 import { pool } from './db.js'
+import mapRouter from './routes/map.js'
+import moodsRouter from './routes/moods.js'
+import statsRouter from './routes/stats.js'
 import notesRouter from './routes/notes.js'
 import perfumesRouter from './routes/perfumes.js'
 
@@ -20,6 +23,9 @@ app.get('/api/health', async (req, res) => {
 
 app.use('/api/perfumes', perfumesRouter)
 app.use('/api/notes', notesRouter)
+app.use('/api/moods', moodsRouter)
+app.use('/api/map', mapRouter)
+app.use('/api/stats', statsRouter)
 
 // Erreurs inattendues : réponse JSON plutôt que la page HTML par défaut
 app.use((err, req, res, next) => {

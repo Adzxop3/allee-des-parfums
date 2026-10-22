@@ -1,7 +1,24 @@
 // Traductions des valeurs du dataset (en anglais) pour l'affichage
 export const GENDERS = { female: 'Femme', male: 'Homme', unisex: 'Mixte' }
 
-export const NOTE_POSITIONS = { top: 'Tête', heart: 'Cœur', base: 'Fond', flat: 'Notes' }
+// Familles olfactives (clés définies dans server/src/families.js)
+export const FAMILIES = {
+  citrus: 'Agrumes',
+  fruity: 'Fruités',
+  floral: 'Floraux',
+  white_floral: 'Fleurs blanches',
+  green: 'Verts et aromatiques',
+  spicy: 'Épicés',
+  woody: 'Boisés',
+  amber: 'Ambrés et résineux',
+  gourmand: 'Gourmands',
+  musky: 'Musqués et poudrés',
+  fresh: 'Frais et marins',
+  leather: 'Cuirs et fumés',
+  other: 'Insolites',
+}
+
+export const NOTE_POSITIONS ={ top: 'Tête', heart: 'Cœur', base: 'Fond', flat: 'Notes' }
 
 export const ACCORDS = {
   alcohol: 'alcool',
@@ -98,6 +115,7 @@ export const ACCORDS = {
   'yellow floral': 'fleurs jaunes',
 }
 
+// Ambiances : saisons et moments (votes Fragrantica), humeurs (déduites des accords)
 export const MOODS = {
   winter: 'Hiver',
   spring: 'Printemps',
@@ -105,4 +123,23 @@ export const MOODS = {
   autumn: 'Automne',
   day: 'Jour',
   night: 'Nuit',
+  energizing: 'Énergisant',
+  sensual: 'Sensuel',
+  cozy: 'Réconfortant',
+  romantic: 'Romantique',
+  elegant: 'Élégant',
+  mysterious: 'Mystérieux',
+  joyful: 'Joyeux',
+  natural: 'Naturel',
+}
+
+export const MOOD_DESCRIPTIONS = {
+  energizing: 'Agrumes, notes marines et aromatiques : frais et tonique.',
+  sensual: 'Ambre, musc, fleurs blanches et épices chaudes : enveloppant et charnel.',
+  cozy: 'Vanille, caramel, notes lactées et gourmandes : doux et rassurant.',
+  romantic: 'Rose, violette, iris et fleurs : tendre et poudré.',
+  elegant: 'Iris, aldéhydes, mousse et cuir : chic et sophistiqué.',
+  mysterious: 'Oud, fumé, tabac et cuir : sombre et intense.',
+  joyful: 'Notes fruitées, tropicales et sucrées : gai et léger.',
+  natural: 'Notes vertes, herbes, conifères et bois : comme une balade en plein air.',
 }

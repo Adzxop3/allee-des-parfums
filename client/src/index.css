@@ -1,1 +1,14 @@
 @import "tailwindcss";
+
+/* Marques des graphiques : réaction au survol et contour visible au clavier */
+.chart-mark {
+  cursor: pointer;
+  outline: none;
+}
+.chart-mark:hover {
+  opacity: 0.8;
+}
+.chart-mark:focus-visible {
+  outline: 2px solid #0b0b0b;
+  outline-offset: 1px;
+}

@@ -5,3 +5,5 @@ dist/
 # Dataset (trop volumineux pour git)
 data/*
 !data/.gitkeep
+.venv/
+__pycache__/
