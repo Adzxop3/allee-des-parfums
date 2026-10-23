@@ -42,6 +42,10 @@ export default function AuthProvider({ children }) {
         await apiSend('POST', '/api/auth/logout')
         setUser(null)
       },
+      async updateSettings(settings) {
+        const data = await apiSend('PATCH', '/api/auth/settings', settings)
+        setUser(data.user)
+      },
       // Supprime le compte et toutes ses données ; l'historique local de « Surprends-moi » est aussi effacé
       async deleteAccount(password) {
         await apiSend('DELETE', '/api/auth/account', { password })

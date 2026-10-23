@@ -1,6 +1,8 @@
 import { Router } from 'express'
 import { pool } from '../db.js'
 import { getPagination, parseId } from '../pagination.js'
+import { COMBINED_RATING, COMMUNITY_JOIN, MIN_VOTES_FOR_BEST, RATING_COLUMNS } from '../ratings.js'
+import { reviewSummary } from './reviews.js'
 
 const router = Router()
 
@@ -12,26 +14,31 @@ router.get('/', async (req, res) => {
 
   // % et _ sont des jokers pour ILIKE : on les échappe
   const pattern = `%${q.replace(/[\\%_]/g, '\\$&')}%`
-  // La sous-requête sur brands permet à PostgreSQL d'utiliser les index de recherche
-  const where = q
-    ? 'WHERE p.name ILIKE $1 OR p.brand_id IN (SELECT id FROM brands WHERE name ILIKE $1)'
-    : ''
-  const params = q ? [pattern] : []
+  // sort=rating : les mieux notés (note combinée), parmi les parfums d'au moins MIN_VOTES_FOR_BEST votes
+  const byRating = req.query.sort === 'rating'
 
-  const { rows: countRows } = await pool.query(
-    `SELECT count(*)::int AS total FROM perfumes p LEFT JOIN brands b ON b.id = p.brand_id ${where}`,
-    params,
-  )
+  // La sous-requête sur brands permet à PostgreSQL d'utiliser les index de recherche
+  const conditions = []
+  const params = []
+  if (q) {
+    params.push(pattern)
+    conditions.push('(p.name ILIKE $1 OR p.brand_id IN (SELECT id FROM brands WHERE name ILIKE $1))')
+  }
+  if (byRating) conditions.push(`p.rating_count >= ${MIN_VOTES_FOR_BEST}`)
+  const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''
+
+  const { rows: countRows } = await pool.query(`SELECT count(*)::int AS total FROM perfumes p ${where}`, params)
   const { rows } = await pool.query(
-    `SELECT p.id, p.name, b.name AS brand, p.year, p.gender, p.image_url
+    `SELECT p.id, p.name, b.name AS brand, p.year, p.gender, p.image_url, ${RATING_COLUMNS}
      FROM perfumes p LEFT JOIN brands b ON b.id = p.brand_id
+     ${COMMUNITY_JOIN}
      ${where}
-     ORDER BY p.name, p.id
+     ORDER BY ${byRating ? `${COMBINED_RATING} DESC NULLS LAST, p.rating_count DESC,` : 'p.name,'} p.id
      LIMIT ${limit} OFFSET ${offset}`,
     params,
   )
 
-  res.json({ page, limit, total: countRows[0].total, results: rows })
+  res.json({ page, limit, total: countRows[0].total, sort: byRating ? 'rating' : 'name', results: rows })
 })
 
 // GET /api/perfumes/random?near=12,34
@@ -95,7 +102,8 @@ router.get('/:id', async (req, res) => {
 
   const { rows } = await pool.query(
     `SELECT p.id, p.name, p.year, p.gender, p.concentration, p.description, p.image_url,
-            b.id AS brand_id, b.name AS brand, b.country AS brand_country
+            b.id AS brand_id, b.name AS brand, b.country AS brand_country,
+            p.rating_avg, p.rating_count
      FROM perfumes p LEFT JOIN brands b ON b.id = p.brand_id
      WHERE p.id = $1`,
     [id],
@@ -136,6 +144,8 @@ router.get('/:id', async (req, res) => {
 
   res.json({
     ...perfume,
+    // Deux notes distinctes : celle des votes Fragrantica (dataset) et celle des avis des membres du site
+    community: await reviewSummary(id),
     perfumers: perfumers.rows,
     notes: notesByPosition,
     accords: accords.rows,

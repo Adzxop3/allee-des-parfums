@@ -18,7 +18,16 @@ export const FAMILIES = {
   other: 'Insolites',
 }
 
-export const NOTE_POSITIONS = { top: 'Tête', heart: 'Cœur', base: 'Fond', flat: 'Notes' }
+// Communauté : motifs de signalement et décisions de modération
+export const REPORT_REASONS = {
+  spam: 'Spam ou publicité',
+  abuse: 'Propos injurieux ou haineux',
+  off_topic: 'Hors sujet',
+  other: 'Autre',
+}
+export const MODERATION_ACTIONS = { hide: 'Masqué', delete: 'Supprimé', ignore: 'Ignoré' }
+
+export const NOTE_POSITIONS ={ top: 'Tête', heart: 'Cœur', base: 'Fond', flat: 'Notes' }
 
 // Parfumothèque : statut d'un parfum (bouton sur la fiche) et onglets de la page
 export const COLLECTION_STATUSES = {

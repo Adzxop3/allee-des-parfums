@@ -1,5 +1,6 @@
 import { Link } from 'react-router'
 import { GENDERS } from '../labels.js'
+import RatingSummary from './RatingSummary.jsx'
 
 // Grille de cartes parfum (2 colonnes sur mobile, 4 sur grand écran)
 export default function PerfumeGrid({ perfumes, dimmed = false }) {
@@ -25,6 +26,7 @@ export default function PerfumeGrid({ perfumes, dimmed = false }) {
             <p className="text-xs text-gray-500">
               {[perfume.year, GENDERS[perfume.gender]].filter(Boolean).join(' · ')}
             </p>
+            <RatingSummary perfume={perfume} className="mt-1" />
             {typeof perfume.score === 'number' && (
               <p className="mt-1 text-xs font-medium text-gray-700">
                 Correspondance {Math.round(perfume.score * 100)} %

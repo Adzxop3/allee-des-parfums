@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { requireVerifiedEmail } from '../auth.js'
 import { pool } from '../db.js'
 import { answersSchema, loadCandidates, recommend } from '../recommend.js'
+import { COMMUNITY_JOIN, RATING_COLUMNS } from '../ratings.js'
 import { parseBody } from '../validate.js'
 
 const router = Router()
@@ -29,8 +30,10 @@ router.post('/', async (req, res) => {
 
   const ranked = await recommend(answers, { excludedIds })
   const { rows } = await pool.query(
-    `SELECT p.id, p.name, b.name AS brand, p.year, p.gender, p.image_url
-     FROM perfumes p LEFT JOIN brands b ON b.id = p.brand_id WHERE p.id = ANY($1)`,
+    `SELECT p.id, p.name, b.name AS brand, p.year, p.gender, p.image_url, ${RATING_COLUMNS}
+     FROM perfumes p LEFT JOIN brands b ON b.id = p.brand_id
+     ${COMMUNITY_JOIN}
+     WHERE p.id = ANY($1)`,
     [ranked.map((r) => r.id)],
   )
   const perfumes = new Map(rows.map((p) => [p.id, p]))

@@ -1,6 +1,6 @@
 import { hash, verify } from '@node-rs/argon2'
 import { Router } from 'express'
-import { ipKeyGenerator, rateLimit } from 'express-rate-limit'
+import { ipKeyGenerator } from 'express-rate-limit'
 import { z } from 'zod'
 import {
   consumeAuthToken,
@@ -13,11 +13,13 @@ import {
 } from '../auth.js'
 import { pool } from '../db.js'
 import { APP_URL, sendMail } from '../mailer.js'
+import { limiter } from '../rateLimit.js'
+import { textField } from '../text.js'
 import { parseBody } from '../validate.js'
 
 const router = Router()
 
-const USER_COLUMNS = 'id, email, display_name, created_at, email_verified_at'
+const USER_COLUMNS = 'id, email, display_name, created_at, email_verified_at, show_favorites, role'
 const VERIFY_HOURS = 24
 const RESET_HOURS = 1
 
@@ -40,17 +42,17 @@ const token = z.string({ error: 'Lien invalide' }).min(1, { error: 'Lien invalid
 const registerSchema = z.object({
   email,
   password: newPassword,
-  displayName: z
-    .string({ error: 'Nom requis' })
-    .trim()
-    .min(1, { error: 'Nom requis' })
-    .max(50, { error: '50 caractères au maximum' }),
+  // Le nom affiché est le pseudo public (avis, profil) : on bloque ceux qui imitent l'équipe du site
+  displayName: textField('Nom', 1, 50).refine((name) => !/admin|mod[ée]rat|staff|support|[ée]quipe/i.test(name), {
+    error: 'Ce nom est réservé, choisissez-en un autre',
+  }),
 })
 const loginSchema = z.object({
   email,
   password: z.string({ error: 'Mot de passe requis' }).min(1, { error: 'Mot de passe requis' }).max(128),
 })
 const forgotSchema = z.object({ email })
+const settingsSchema = z.object({ showFavorites: z.boolean({ error: 'Valeur invalide' }) })
 const deleteSchema = z.object({
   password: z.string({ error: 'Mot de passe requis' }).min(1, { error: 'Mot de passe requis' }).max(128),
 })
@@ -59,20 +61,6 @@ const verifySchema = z.object({ token })
 
 // --- Limitation des tentatives ---
 
-function limiter({ minutes, limit, message, keyGenerator, skipSuccessfulRequests = false }) {
-  return rateLimit({
-    windowMs: minutes * 60 * 1000,
-    limit,
-    keyGenerator,
-    skipSuccessfulRequests,
-    standardHeaders: 'draft-8',
-    legacyHeaders: false,
-    handler: (req, res) => {
-      const wait = Math.max(1, Math.ceil((req.rateLimit.resetTime - Date.now()) / 60000))
-      res.status(429).json({ error: `${message} Réessayez dans ${wait} min.` })
-    },
-  })
-}
 const bodyEmail = (req) => String(req.body?.email ?? '').trim().toLowerCase()
 
 // Connexion : seuls les échecs comptent. 5 par compte visé (et par IP), 20 par IP.
@@ -189,9 +177,10 @@ router.post('/logout', async (req, res) => {
   res.status(204).end()
 })
 
-// GET /api/auth/me : l'utilisateur connecté (401 sinon)
-router.get('/me', requireAuth, (req, res) => {
-  res.json({ user: publicUser(req.user) })
+// GET /api/auth/me : l'utilisateur connecté, ou { user: null } pour un visiteur
+// (pas d'erreur 401 : ne pas être connecté est le cas normal d'un visiteur)
+router.get('/me', (req, res) => {
+  res.json({ user: req.user ? publicUser(req.user) : null })
 })
 
 // POST /api/auth/verify-email  { token }
@@ -243,6 +232,17 @@ router.post('/reset-password', async (req, res) => {
   )
   await pool.query('DELETE FROM sessions WHERE user_id = $1', [userId])
   res.json({ reset: true })
+})
+
+// PATCH /api/auth/settings  { showFavorites } — confidentialité du profil public
+router.patch('/settings', requireAuth, async (req, res) => {
+  const data = parseBody(settingsSchema, req, res)
+  if (!data) return
+  const { rows } = await pool.query(
+    `UPDATE users SET show_favorites = $2 WHERE id = $1 RETURNING ${USER_COLUMNS}`,
+    [req.user.id, data.showFavorites],
+  )
+  res.json({ user: publicUser(rows[0]) })
 })
 
 // DELETE /api/auth/account  { password }

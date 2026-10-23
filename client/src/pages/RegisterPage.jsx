@@ -66,6 +66,17 @@ export default function RegisterPage() {
           hint="8 caractères minimum."
           error={fields.password}
         />
+        <p className="text-sm text-gray-600">
+          En créant un compte, vous acceptez les{' '}
+          <Link to="/conditions" className="underline underline-offset-2">
+            conditions d'utilisation
+          </Link>{' '}
+          et la{' '}
+          <Link to="/confidentialite" className="underline underline-offset-2">
+            politique de confidentialité
+          </Link>
+          . Votre pseudo et vos avis seront publics.
+        </p>
         <button
           type="submit"
           disabled={pending}

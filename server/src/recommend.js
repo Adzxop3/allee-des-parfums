@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { pool } from './db.js'
 import { GROUP_FAMILIES } from './families.js'
+import { COMBINED_RATING, COMMUNITY_JOIN } from './ratings.js'
 
 // Moteur du questionnaire : chaque parfum candidat reçoit un score de 0 à 1
 // (moyenne pondérée des questions répondues) et une explication courte.
@@ -52,8 +53,11 @@ async function fetchCandidates() {
   const filter = 'JOIN perfumes p ON p.id = x.perfume_id AND p.rating_count >= $1'
   const [perfumes, accords, notes, moods] = await Promise.all([
     pool.query(
-      `SELECT p.id, p.name, b.name AS brand, p.gender, p.rating_count, p.longevity, p.sillage
-       FROM perfumes p LEFT JOIN brands b ON b.id = p.brand_id WHERE p.rating_count >= $1`,
+      `SELECT p.id, p.name, b.name AS brand, p.gender, p.rating_count, p.longevity, p.sillage,
+              ${COMBINED_RATING} AS rating
+       FROM perfumes p LEFT JOIN brands b ON b.id = p.brand_id
+       ${COMMUNITY_JOIN}
+       WHERE p.rating_count >= $1`,
       [MIN_RATINGS],
     ),
     pool.query(
@@ -115,6 +119,8 @@ async function fetchCandidates() {
     c.intensityLevel =
       c.intensityValue === null ? null : c.intensityValue < thresholds[0] ? 0 : c.intensityValue < thresholds[1] ? 1 : 2
     c.popularity = (Math.log(c.rating_count) - minLog) / (maxLog - minLog)
+    // Note (Fragrantica + avis des membres) ramenée entre 0 (1/5) et 1 (5/5)
+    c.quality = c.rating ? (c.rating - 1) / 4 : 0.5
   }
 
   // Pour illustrer la question des familles : parmi les parfums très connus, les deux où la famille pèse le plus
@@ -176,12 +182,16 @@ function scorePerfume(c, answers) {
 
   const keys = Object.keys(parts)
   // Aucune préférence exprimée : les parfums les plus populaires d'abord (sans pourcentage de correspondance)
-  if (!keys.length) return { score: null, rank: c.popularity * penalty, parts }
+  if (!keys.length) return { score: null, rank: (c.popularity * 0.9 + c.quality * 0.1) * penalty, parts }
   const totalWeight = keys.reduce((sum, key) => sum + WEIGHTS[key], 0)
   const score = (keys.reduce((sum, key) => sum + WEIGHTS[key] * parts[key], 0) / totalWeight) * penalty
-  // Avec peu de réponses, beaucoup de parfums atteignent le même score : sans préférence sur la
-  // popularité (question 8), elle départage légèrement le classement (le score affiché ne change pas)
-  const rank = answers.popularity === 'any' ? score * 0.95 + c.popularity * 0.05 : score
+  // Avec peu de réponses, beaucoup de parfums atteignent le même score : la note de la communauté
+  // (5 %) et, sans préférence à la question 8, la popularité (5 %) départagent le classement.
+  // Le score affiché (correspondance) ne change pas.
+  const rank =
+    answers.popularity === 'any'
+      ? score * 0.9 + c.popularity * 0.05 + c.quality * 0.05
+      : score * 0.95 + c.quality * 0.05
   return { score, rank, parts }
 }
 

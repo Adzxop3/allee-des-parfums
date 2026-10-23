@@ -124,6 +124,11 @@ function MobileAccount() {
           <Link to="/compte" className="block py-3 text-gray-700">
             Mon compte
           </Link>
+          {user.isAdmin && (
+            <Link to="/admin" className="block py-3 text-gray-700">
+              Modération
+            </Link>
+          )}
           <button type="button" onClick={logout} className="block w-full py-3 text-left text-gray-700">
             Se déconnecter
           </button>

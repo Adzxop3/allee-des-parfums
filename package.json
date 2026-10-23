@@ -8,6 +8,14 @@
     "map": "precompute\\.venv\\Scripts\\python precompute/build_map.py",
     "dev:server": "npm run dev --prefix server",
     "dev:client": "npm run dev --prefix client",
-    "install:all": "npm install --prefix server && npm install --prefix client"
+    "install:all": "npm install --prefix server && npm install --prefix client",
+    "make-admin": "npm run make-admin --prefix server --",
+    "build": "npm ci --prefix server --omit=dev && npm ci --prefix client --include=dev && npm run build --prefix client",
+    "start": "npm start --prefix server",
+    "db:backup": "npm run db:backup --prefix server --",
+    "db:restore": "npm run db:restore --prefix server --"
+  },
+  "engines": {
+    "node": ">=22.9"
   }
 }

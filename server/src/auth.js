@@ -47,7 +47,7 @@ export async function loadUser(req, res, next) {
 
   const id = hashToken(token)
   const { rows } = await pool.query(
-    `SELECT u.id, u.email, u.display_name, u.created_at, u.email_verified_at, s.expires_at
+    `SELECT u.id, u.email, u.display_name, u.created_at, u.email_verified_at, u.show_favorites, u.role, s.expires_at
      FROM sessions s JOIN users u ON u.id = s.user_id
      WHERE s.id = $1 AND s.expires_at > now()`,
     [id],
@@ -87,6 +87,13 @@ export function requireVerifiedEmail(req, res, next) {
   next()
 }
 
+// Middleware des routes de modération (rôle 'admin')
+export function requireAdmin(req, res, next) {
+  if (!req.user) return res.status(401).json({ error: 'Connexion requise' })
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Accès réservé aux modérateurs.' })
+  next()
+}
+
 // Ce que l'API renvoie d'un utilisateur (jamais le hash du mot de passe)
 export function publicUser(user) {
   return {
@@ -94,6 +101,8 @@ export function publicUser(user) {
     email: user.email,
     displayName: user.display_name,
     emailVerified: Boolean(user.email_verified_at),
+    showFavorites: Boolean(user.show_favorites),
+    isAdmin: user.role === 'admin',
     createdAt: user.created_at,
   }
 }

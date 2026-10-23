@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { pool } from '../db.js'
 import { getPagination, parseId } from '../pagination.js'
+import { COMBINED_RATING, COMMUNITY_JOIN, MIN_VOTES_FOR_BEST, RATING_COLUMNS } from '../ratings.js'
 
 const router = Router()
 
@@ -74,21 +75,36 @@ router.get('/:id/perfumes', async (req, res) => {
   if (!noteRows.length) return res.status(404).json({ error: 'Note introuvable' })
   const note = noteRows[0]
 
-  // Une note peut apparaître à plusieurs étages d'un même parfum : on regroupe
+  // sort=rating : les mieux notés (note combinée), parmi les parfums d'au moins MIN_VOTES_FOR_BEST votes
+  const byRating = req.query.sort === 'rating'
+  const filter = byRating ? `WHERE p.rating_count >= ${MIN_VOTES_FOR_BEST}` : ''
+
+  // Une note peut apparaître à plusieurs étages d'un même parfum : on regroupe d'abord par parfum
+  const matching = `matching AS (
+       SELECT perfume_id, array_agg(position) AS positions FROM perfume_notes WHERE note_id = $1 GROUP BY perfume_id
+     )`
+  let total = note.perfume_count
+  if (byRating) {
+    const { rows: countRows } = await pool.query(
+      `WITH ${matching} SELECT count(*)::int AS total FROM matching m JOIN perfumes p ON p.id = m.perfume_id ${filter}`,
+      [id],
+    )
+    total = countRows[0].total
+  }
   const { rows } = await pool.query(
-    `SELECT p.id, p.name, b.name AS brand, p.year, p.gender, p.image_url,
-            array_agg(pn.position) AS positions
-     FROM perfume_notes pn
-     JOIN perfumes p ON p.id = pn.perfume_id
+    `WITH ${matching}
+     SELECT p.id, p.name, b.name AS brand, p.year, p.gender, p.image_url, m.positions, ${RATING_COLUMNS}
+     FROM matching m
+     JOIN perfumes p ON p.id = m.perfume_id
      LEFT JOIN brands b ON b.id = p.brand_id
-     WHERE pn.note_id = $1
-     GROUP BY p.id, b.name
-     ORDER BY p.rating_count DESC, p.id
+     ${COMMUNITY_JOIN}
+     ${filter}
+     ORDER BY ${byRating ? `${COMBINED_RATING} DESC NULLS LAST,` : ''} p.rating_count DESC, p.id
      LIMIT ${limit} OFFSET ${offset}`,
     [id],
   )
 
-  res.json({ note, page, limit, total: note.perfume_count, results: rows })
+  res.json({ note, page, limit, total, sort: byRating ? 'rating' : 'popular', results: rows })
 })
 
 export default router

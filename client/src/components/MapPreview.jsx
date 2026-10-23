@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
 import { ACCORDS } from '../labels.js'
 import { useFetch } from '../useFetch.js'
+import RatingSummary from './RatingSummary.jsx'
 import { ErrorMessage, Loading } from './Status.jsx'
 
 // Aperçu du parfum choisi sur la carte : panneau en bas de l'écran sur mobile,
@@ -49,6 +50,15 @@ export default function MapPreview({ perfumeId, group, onClose }) {
                   .join(', ')}
               </p>
             )}
+            <RatingSummary
+              className="mt-1"
+              perfume={{
+                ratingAvg: perfume.rating_avg,
+                ratingCount: perfume.rating_count,
+                communityAvg: perfume.community.average,
+                communityCount: perfume.community.count,
+              }}
+            />
             <Link
               to={`/perfumes/${perfume.id}`}
               className="mt-2 inline-block text-sm font-medium underline underline-offset-2"

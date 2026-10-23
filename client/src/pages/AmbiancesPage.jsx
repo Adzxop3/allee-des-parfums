@@ -28,7 +28,9 @@ export default function AmbiancesPage() {
   const page = Number(params.get('page')) || 1
   const mood = params.get('humeur')
 
+  const wellRated = params.get('bienNotes') === '1'
   const query = new URLSearchParams({ page, limit: LIMIT })
+  if (wellRated) query.set('minRating', 4)
   for (const filter of FILTERS) {
     const value = params.get(filter.param)
     if (value) query.set(filter.api, value)
@@ -77,6 +79,16 @@ export default function AmbiancesPage() {
           </div>
         ))}
       </div>
+
+      <label className="mt-3 flex items-center gap-2 text-sm">
+        <input
+          type="checkbox"
+          checked={wellRated}
+          onChange={(event) => select('bienNotes', event.target.checked ? '1' : '')}
+          className="accent-gray-900"
+        />
+        Seulement les parfums bien notés (4/5 et plus, votes Fragrantica et avis des membres)
+      </label>
 
       {mood && MOOD_DESCRIPTIONS[mood] && (
         <p className="mt-3 text-sm text-gray-700">

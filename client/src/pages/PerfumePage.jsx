@@ -1,9 +1,11 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router'
 import { addRecentPerfume } from '../history.js'
 import { describePerfume } from '../describe.js'
 import { ACCORDS, GENDERS, MOODS, NOTE_POSITIONS } from '../labels.js'
 import CollectionControl from '../components/CollectionControl.jsx'
+import StarDisplay from '../components/StarDisplay.jsx'
+import ReviewsSection from '../reviews/ReviewsSection.jsx'
 import { ErrorMessage, Loading } from '../components/Status.jsx'
 import { useFetch } from '../useFetch.js'
 import { usePageTitle } from '../usePageTitle.js'
@@ -20,11 +22,16 @@ export default function PerfumePage() {
     if (perfume) addRecentPerfume(perfume.id)
   }, [perfume])
 
+  // Moyenne des avis mise à jour après une publication (sans recharger toute la fiche)
+  const [community, setCommunity] = useState({ perfumeId: null, summary: null })
+
   // Retour à la page précédente (la recherche), ou à l'accueil si on arrive directement ici
   const goBack = () => (location.key === 'default' ? navigate('/') : navigate(-1))
 
   if (loading) return <Loading />
   if (error) return <ErrorMessage message={error} onRetry={reload} />
+
+  const communitySummary = community.perfumeId === perfume.id ? community.summary : perfume.community
 
   const surprise = location.state?.surprise
   const noteGroups = Object.entries(perfume.notes).filter(([, notes]) => notes.length)
@@ -76,6 +83,34 @@ export default function PerfumePage() {
               {perfume.perfumers.map((p) => p.name).join(', ')}
             </p>
           )}
+
+          {/* Deux notes distinctes : les votes Fragrantica (dataset) et les avis des membres du site */}
+          <ul className="mt-3 space-y-1 text-sm">
+            {perfume.rating_avg && (
+              <li className="flex flex-wrap items-center gap-2">
+                <StarDisplay value={perfume.rating_avg} />
+                <span>
+                  <strong>{perfume.rating_avg.toLocaleString('fr-FR', { maximumFractionDigits: 1 })}</strong> / 5 sur
+                  Fragrantica ({perfume.rating_count.toLocaleString('fr-FR')} votes)
+                </span>
+              </li>
+            )}
+            <li className="flex flex-wrap items-center gap-2">
+              {communitySummary.count > 0 ? (
+                <>
+                  <StarDisplay value={communitySummary.average} />
+                  <a href="#avis" className="underline underline-offset-2">
+                    <strong>{communitySummary.average.toLocaleString('fr-FR')}</strong> / 5 dans les avis des
+                    membres ({communitySummary.count} avis)
+                  </a>
+                </>
+              ) : (
+                <a href="#avis" className="text-gray-600 underline underline-offset-2">
+                  Pas encore d'avis des membres : donnez le vôtre
+                </a>
+              )}
+            </li>
+          </ul>
 
           {/* key : l'état repart de zéro quand on passe d'un parfum à un autre */}
           <div className="mt-4">
@@ -140,6 +175,12 @@ export default function PerfumePage() {
         <h2 className="font-semibold">Description</h2>
         <p className="mt-2 text-gray-700">{describePerfume(perfume)}</p>
       </section>
+
+      <ReviewsSection
+        key={perfume.id}
+        perfumeId={perfume.id}
+        onSummaryChange={(summary) => setCommunity({ perfumeId: perfume.id, summary })}
+      />
     </article>
   )
 }

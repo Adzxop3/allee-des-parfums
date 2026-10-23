@@ -1,7 +1,13 @@
 import { useEffect, useRef } from 'react'
 import { Link, Route, Routes, useLocation, useNavigationType } from 'react-router'
 import AccountPage from './pages/AccountPage.jsx'
+import AdminPage from './pages/AdminPage.jsx'
+import MemberPage from './pages/MemberPage.jsx'
+import Footer from './components/Footer.jsx'
 import Header from './components/Header.jsx'
+import LegalNoticePage from './legal/LegalNoticePage.jsx'
+import PrivacyPage from './legal/PrivacyPage.jsx'
+import TermsPage from './legal/TermsPage.jsx'
 import VerifyEmailBanner from './components/VerifyEmailBanner.jsx'
 import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx'
 import ResetPasswordPage from './pages/ResetPasswordPage.jsx'
@@ -59,9 +65,15 @@ export default function App() {
           <Route path="/parfumotheque" element={<CollectionPage />} />
           <Route path="/questionnaire" element={<QuizPage />} />
           <Route path="/compte" element={<AccountPage />} />
+          <Route path="/membres/:id" element={<MemberPage />} />
+          <Route path="/admin" element={<AdminPage />} />
+          <Route path="/mentions-legales" element={<LegalNoticePage />} />
+          <Route path="/conditions" element={<TermsPage />} />
+          <Route path="/confidentialite" element={<PrivacyPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
+      <Footer />
     </div>
   )
 }

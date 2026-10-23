@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { pool } from '../db.js'
 import { getPagination } from '../pagination.js'
+import { COMBINED_RATING, COMMUNITY_JOIN, RATING_COLUMNS } from '../ratings.js'
 
 const router = Router()
 
@@ -38,12 +39,19 @@ router.get('/perfumes', async (req, res) => {
   const score = selected.length
     ? `(${selected.map((_, i) => `pm${i}.score`).join(' + ')}) / ${selected.length}`
     : 'NULL::real'
+  // minRating=4 : seulement les parfums bien notés (note combinée Fragrantica + membres)
+  const minRating = Number(req.query.minRating)
+  const ratingFilter = minRating >= 1 && minRating <= 5 ? `AND ${COMBINED_RATING} >= ${minRating}` : ''
+
   // 1. Parfums assez votés : lus dans l'index (rating_count, id), sans parcourir la table
+  //    (sauf avec le filtre de note, qui a besoin de la note de chaque parfum)
   // 2. Score, tri et pagination sur ces seuls identifiants ; count(*) OVER () donne le total
   // 3. Les infos d'affichage ne sont lues que pour la page demandée
   const { rows } = await pool.query(
     `WITH popular AS MATERIALIZED (
-       SELECT id, rating_count FROM perfumes WHERE rating_count >= $1
+       SELECT p.id, p.rating_count FROM perfumes p
+       ${ratingFilter ? COMMUNITY_JOIN : ''}
+       WHERE p.rating_count >= $1 ${ratingFilter}
      ),
      ranked AS (
        SELECT p.id, p.rating_count, ${score} AS score, count(*) OVER ()::int AS total
@@ -52,10 +60,11 @@ router.get('/perfumes', async (req, res) => {
        ORDER BY score DESC NULLS LAST, p.rating_count DESC, p.id
        LIMIT ${limit} OFFSET ${offset}
      )
-     SELECT r.id, pf.name, b.name AS brand, pf.year, pf.gender, pf.image_url, r.score, r.total
+     SELECT r.id, p.name, b.name AS brand, p.year, p.gender, p.image_url, r.score, r.total, ${RATING_COLUMNS}
      FROM ranked r
-     JOIN perfumes pf ON pf.id = r.id
-     LEFT JOIN brands b ON b.id = pf.brand_id
+     JOIN perfumes p ON p.id = r.id
+     LEFT JOIN brands b ON b.id = p.brand_id
+     ${COMMUNITY_JOIN}
      ORDER BY r.score DESC NULLS LAST, r.rating_count DESC, r.id`,
     [MIN_RATINGS, ...selected],
   )

@@ -57,6 +57,11 @@ export default function UserMenu() {
           <Link to="/compte" className="block rounded px-2 py-1.5 hover:bg-gray-100">
             Mon compte
           </Link>
+          {user.isAdmin && (
+            <Link to="/admin" className="block rounded px-2 py-1.5 hover:bg-gray-100">
+              Modération
+            </Link>
+          )}
           <button
             type="button"
             onClick={logout}

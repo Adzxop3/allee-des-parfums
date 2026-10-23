@@ -2,6 +2,7 @@ import { Link, useParams, useSearchParams } from 'react-router'
 import NoteChip from '../components/NoteChip.jsx'
 import Pagination from '../components/Pagination.jsx'
 import PerfumeGrid from '../components/PerfumeGrid.jsx'
+import SortSelect from '../components/SortSelect.jsx'
 import { FAMILIES } from '../labels.js'
 import { ErrorMessage, Loading } from '../components/Status.jsx'
 import { useFetch } from '../useFetch.js'
@@ -13,16 +14,19 @@ export default function NotePage() {
   const { id } = useParams()
   const [params, setParams] = useSearchParams()
   const page = Number(params.get('page')) || 1
+  const byRating = params.get('tri') === 'note'
 
   const { data: note, error, loading, reload } = useFetch(`/api/notes/${id}`)
-  const perfumes = useFetch(`/api/notes/${id}/perfumes?page=${page}&limit=${LIMIT}`)
+  const perfumes = useFetch(
+    `/api/notes/${id}/perfumes?page=${page}&limit=${LIMIT}&sort=${byRating ? 'rating' : 'popular'}`,
+  )
   usePageTitle(note && !loading ? note.name : null)
 
   if (loading) return <Loading />
   if (error) return <ErrorMessage message={error} onRetry={reload} />
 
   function goToPage(newPage) {
-    setParams({ page: newPage })
+    setParams(byRating ? { tri: 'note', page: newPage } : { page: newPage })
     window.scrollTo(0, 0)
   }
 
@@ -59,7 +63,25 @@ export default function NotePage() {
       )}
 
       <section className="mt-8">
-        <h2 className="mb-3 font-semibold">Parfums avec cette note (les plus populaires d'abord)</h2>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="font-semibold">
+            Parfums avec cette note
+            {byRating && perfumes.data && (
+              <span className="font-normal text-gray-600">
+                {' '}
+                ({perfumes.data.total.toLocaleString('fr-FR')} ayant au moins 100 votes)
+              </span>
+            )}
+          </h2>
+          <SortSelect
+            value={byRating ? 'note' : 'populaires'}
+            options={[
+              { value: 'populaires', label: 'Les plus populaires' },
+              { value: 'note', label: 'Les mieux notés' },
+            ]}
+            onChange={(value) => setParams(value === 'note' ? { tri: 'note' } : {})}
+          />
+        </div>
         {perfumes.error && <ErrorMessage message={perfumes.error} onRetry={perfumes.reload} />}
         {perfumes.loading && !perfumes.data && <Loading />}
         {perfumes.data && (

@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { requireVerifiedEmail } from '../auth.js'
 import { pool } from '../db.js'
 import { parseId } from '../pagination.js'
+import { COMBINED_RATING, COMMUNITY_JOIN, RATING_COLUMNS } from '../ratings.js'
 import { parseBody } from '../validate.js'
 
 // Parfumothèque de l'utilisateur connecté (email confirmé obligatoire).
@@ -145,11 +146,13 @@ router.get('/recommendations', async (req, res) => {
        ORDER BY score DESC
        LIMIT 60
      )
-     SELECT p.id, p.name, b.name AS brand, p.year, p.gender, p.image_url, c.sources
+     SELECT p.id, p.name, b.name AS brand, p.year, p.gender, p.image_url, c.sources, ${RATING_COLUMNS}
      FROM candidates c
      JOIN perfumes p ON p.id = c.id
      LEFT JOIN brands b ON b.id = p.brand_id
-     ORDER BY c.score DESC`,
+     ${COMMUNITY_JOIN}
+     -- La note (Fragrantica + membres) module légèrement la ressemblance : ±10 % entre 1/5 et 5/5
+     ORDER BY c.score * (0.9 + 0.2 * coalesce((${COMBINED_RATING} - 1) / 4, 0.5)) DESC`,
     [req.user.id, liked.map((l) => l.perfume_id), liked.map((l) => Number(l.weight))],
   )
 

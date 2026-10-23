@@ -79,14 +79,17 @@ export default function AccountPage() {
         <dd>{new Date(user.createdAt).toLocaleDateString('fr-FR', { dateStyle: 'long' })}</dd>
       </dl>
 
+      <PublicProfileSettings />
+
       <section aria-labelledby="suppression-titre" className="mt-10 rounded border border-red-200 bg-white p-4">
         <h2 id="suppression-titre" className="text-lg font-semibold text-red-800">
           Supprimer mon compte
         </h2>
         <p className="mt-2 text-sm">
-          La suppression est <strong>définitive</strong>. Seront effacés : votre compte, votre parfumothèque (parfums,
-          notes et commentaires), vos préférences du questionnaire, vos sessions de connexion, ainsi que
-          l'historique des parfums consultés gardé par ce navigateur.
+          La suppression est <strong>définitive</strong>. Seront effacés : votre compte, vos avis publics et leurs
+          commentaires, vos commentaires sur les avis des autres, vos votes « utile » et vos signalements, votre
+          parfumothèque (parfums, notes et commentaires personnels), vos préférences du questionnaire, vos sessions
+          de connexion, ainsi que l'historique des parfums consultés gardé par ce navigateur.
         </p>
         <form onSubmit={handleDelete} noValidate className="mt-4 space-y-4">
           {error && <ErrorMessage message={error} />}
@@ -108,5 +111,52 @@ export default function AccountPage() {
         </form>
       </section>
     </div>
+  )
+}
+
+// Profil public : lien et choix d'y afficher ses favoris (enregistré dès que la case change)
+function PublicProfileSettings() {
+  const { user, updateSettings } = useAuth()
+  const [status, setStatus] = useState(null) // null | 'saving' | 'saved' | message d'erreur
+
+  async function toggle(event) {
+    setStatus('saving')
+    try {
+      await updateSettings({ showFavorites: event.target.checked })
+      setStatus('saved')
+    } catch (err) {
+      setStatus(err.message)
+    }
+  }
+
+  return (
+    <section aria-labelledby="profil-titre" className="mt-8 rounded border border-gray-200 bg-white p-4">
+      <h2 id="profil-titre" className="text-lg font-semibold">
+        Profil public
+      </h2>
+      <p className="mt-2 text-sm text-gray-600">
+        Votre pseudo et vos avis publiés sont visibles de tous.{' '}
+        <Link to={`/membres/${user.id}`} className="underline underline-offset-2">
+          Voir mon profil public
+        </Link>
+      </p>
+      <label className="mt-3 flex items-start gap-2 text-sm">
+        <input
+          type="checkbox"
+          checked={user.showFavorites}
+          onChange={toggle}
+          disabled={status === 'saving'}
+          className="mt-0.5 accent-gray-900"
+        />
+        <span>
+          Afficher mes parfums favoris sur mon profil public
+          <span className="block text-gray-600">Les parfums notés 5 étoiles dans votre parfumothèque.</span>
+        </span>
+      </label>
+      <p role="status" className="mt-2 text-sm text-gray-700">
+        {status === 'saved' && 'Préférence enregistrée.'}
+      </p>
+      {status && !['saving', 'saved'].includes(status) && <ErrorMessage message={status} />}
+    </section>
   )
 }
