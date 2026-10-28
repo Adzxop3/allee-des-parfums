@@ -2,7 +2,7 @@
 export default function Pagination({ page, totalPages, onChange }) {
   if (totalPages <= 1) return null
 
-  const buttonClass = 'rounded border border-gray-300 bg-white px-3 py-1 disabled:opacity-40'
+  const buttonClass = 'rounded border border-field bg-surface px-3 py-1 disabled:opacity-40'
   return (
     <nav aria-label="Pagination" className="mt-6 flex items-center justify-center gap-4">
       <button

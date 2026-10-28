@@ -3,6 +3,7 @@ import { Link, Navigate, useLocation } from 'react-router'
 import { useAuth } from '../auth/AuthContext.js'
 import { ErrorMessage } from '../components/Status.jsx'
 import TextField from '../components/TextField.jsx'
+import { buttonClass } from '../ui/styles.js'
 import { usePageTitle } from '../usePageTitle.js'
 
 export default function RegisterPage() {
@@ -38,9 +39,9 @@ export default function RegisterPage() {
   return (
     <div className="mx-auto max-w-sm">
       <h1 className="text-2xl font-bold">Créer un compte</h1>
-      <p className="mt-1 text-sm text-gray-600">
+      <p className="mt-1 text-sm text-muted">
         Déjà inscrit ?{' '}
-        <Link to="/connexion" state={location.state} className="underline underline-offset-2">
+        <Link to="/connexion" state={location.state} className="link">
           Se connecter
         </Link>
       </p>
@@ -66,13 +67,13 @@ export default function RegisterPage() {
           hint="8 caractères minimum."
           error={fields.password}
         />
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted">
           En créant un compte, vous acceptez les{' '}
-          <Link to="/conditions" className="underline underline-offset-2">
+          <Link to="/conditions" className="link">
             conditions d'utilisation
           </Link>{' '}
           et la{' '}
-          <Link to="/confidentialite" className="underline underline-offset-2">
+          <Link to="/confidentialite" className="link">
             politique de confidentialité
           </Link>
           . Votre pseudo et vos avis seront publics.
@@ -80,7 +81,7 @@ export default function RegisterPage() {
         <button
           type="submit"
           disabled={pending}
-          className="w-full rounded bg-gray-900 px-4 py-2 text-white disabled:opacity-60"
+          className={buttonClass({ className: 'w-full' })}
         >
           {pending ? 'Création…' : 'Créer mon compte'}
         </button>

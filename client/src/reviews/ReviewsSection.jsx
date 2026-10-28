@@ -4,6 +4,7 @@ import { useAuth } from '../auth/AuthContext.js'
 import Pagination from '../components/Pagination.jsx'
 import RequireVerifiedEmail from '../components/RequireVerifiedEmail.jsx'
 import { ErrorMessage, Loading } from '../components/Status.jsx'
+import { buttonClass, inputClass } from '../ui/styles.js'
 import { useFetch } from '../useFetch.js'
 import CommentsThread from './CommentsThread.jsx'
 import HelpfulButton from './HelpfulButton.jsx'
@@ -27,12 +28,12 @@ export default function ReviewsSection({ perfumeId, onSummaryChange }) {
   }
 
   return (
-    <section id="avis" aria-labelledby="avis-titre" className="mt-10 border-t border-gray-200 pt-6">
+    <section id="avis" aria-labelledby="avis-titre" className="mt-10 border-t border-line pt-6">
       <h2 id="avis-titre" className="text-xl font-semibold">
         Avis de la communauté
       </h2>
       {list.data && (
-        <p className="mt-1 text-sm text-gray-600">
+        <p className="mt-1 text-sm text-muted">
           {list.data.summary.count === 0
             ? 'Aucun avis pour le moment.'
             : `${list.data.summary.count} avis, note moyenne ${list.data.summary.average.toLocaleString('fr-FR')} / 5`}
@@ -57,7 +58,7 @@ export default function ReviewsSection({ perfumeId, onSummaryChange }) {
                 setSort(event.target.value)
                 setPage(1)
               }}
-              className="rounded border border-gray-300 bg-white px-2 py-1"
+              className={inputClass({ size: 'sm' })}
             >
               <option value="recent">Les plus récents</option>
               <option value="useful">Les plus utiles</option>
@@ -97,7 +98,7 @@ function WriteInvite() {
   return open ? (
     <RequireVerifiedEmail feature="donner votre avis" />
   ) : (
-    <button type="button" onClick={() => setOpen(true)} className="rounded bg-gray-900 px-4 py-2 text-white">
+    <button type="button" onClick={() => setOpen(true)} className={buttonClass()}>
       Écrire un avis
     </button>
   )
@@ -155,7 +156,7 @@ function MyReview({ perfumeId, onChange }) {
 
   if (!state.review) {
     return (
-      <button type="button" onClick={() => setMode('form')} className="rounded bg-gray-900 px-4 py-2 text-white">
+      <button type="button" onClick={() => setMode('form')} className={buttonClass()}>
         Écrire un avis
       </button>
     )
@@ -163,30 +164,30 @@ function MyReview({ perfumeId, onChange }) {
 
   return (
     <div>
-      <h3 className="mb-2 text-sm font-semibold text-gray-700">Votre avis</h3>
+      <h3 className="mb-2 text-sm font-semibold text-ink-soft">Votre avis</h3>
       <ReviewCard review={state.review}>
         {state.review.status === 'hidden' && (
-          <p className="mt-3 rounded bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          <p className="mt-3 rounded bg-notice-bg px-3 py-2 text-sm text-notice">
             Cet avis a été masqué par la modération : il n'est plus visible des autres membres.
           </p>
         )}
         <CommentsThread review={state.review} before={<HelpfulButton review={state.review} isOwn />} />
         <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
-          <button type="button" onClick={() => setMode('form')} className="underline underline-offset-2">
+          <button type="button" onClick={() => setMode('form')} className="link">
             Modifier
           </button>
           {confirmDelete ? (
             <span className="flex flex-wrap items-center gap-2">
               Supprimer définitivement votre avis ?
-              <button type="button" onClick={remove} className="rounded bg-red-700 px-2 py-0.5 text-white">
+              <button type="button" onClick={remove} className={buttonClass({ variant: 'danger', size: 'sm' })}>
                 Supprimer
               </button>
-              <button type="button" onClick={() => setConfirmDelete(false)} className="rounded border border-gray-300 px-2 py-0.5">
+              <button type="button" onClick={() => setConfirmDelete(false)} className={buttonClass({ variant: 'secondary', size: 'sm' })}>
                 Annuler
               </button>
             </span>
           ) : (
-            <button type="button" onClick={() => setConfirmDelete(true)} className="text-gray-600 underline underline-offset-2">
+            <button type="button" onClick={() => setConfirmDelete(true)} className="text-muted link">
               Supprimer
             </button>
           )}

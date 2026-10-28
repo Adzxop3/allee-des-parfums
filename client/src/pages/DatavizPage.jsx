@@ -1,10 +1,10 @@
 import { useState } from 'react'
+import BarList from '../charts/BarList.jsx'
 import BrandHeatmap from '../charts/BrandHeatmap.jsx'
 import { ChartCard, DataTable } from '../charts/chartKit.jsx'
 import { formatInt, formatLean, formatPercent } from '../charts/chartUtils.js'
 import SeasonAccordsChart from '../charts/SeasonAccordsChart.jsx'
 import StackedColumns from '../charts/StackedColumns.jsx'
-import BarList from '../charts/BarList.jsx'
 import FilterChips from '../components/FilterChips.jsx'
 import { ACCORDS, FAMILIES, GENDERS } from '../labels.js'
 import { MAP_GROUPS, mapGroupOf } from '../mapGroups.js'
@@ -17,9 +17,9 @@ const FAMILY_SERIES = ['citrus', 'green', 'gourmand', 'amber', 'floral', 'woody'
   MAP_GROUPS.find((g) => g.key === key),
 )
 const GENDER_SERIES = [
-  { key: 'female', label: GENDERS.female, color: '#2a78d6' },
-  { key: 'male', label: GENDERS.male, color: '#eb6834' },
-  { key: 'unisex', label: GENDERS.unisex, color: '#1baf7a' },
+  { key: 'female', label: GENDERS.female, color: 'var(--series-blue)' },
+  { key: 'male', label: GENDERS.male, color: 'var(--series-orange)' },
+  { key: 'unisex', label: GENDERS.unisex, color: 'var(--series-aqua)' },
 ]
 const YEAR_NOTE =
   "Le nombre sous chaque décennie est le nombre de parfums. Il y en a peu avant 1990 ; 18 % des parfums n'ont pas d'année et ne sont pas comptés ; les années 2020 incluent 2026, encore en cours."
@@ -46,7 +46,7 @@ export default function DatavizPage() {
   return (
     <div>
       <h1 className="text-2xl font-bold">Les parfums en chiffres</h1>
-      <p className="mt-1 text-sm text-gray-600">
+      <p className="mt-1 text-sm text-muted">
         Ce que racontent les 140 000 parfums du dataset. Survolez ou touchez les graphiques pour le
         détail ; chaque graphique a aussi son tableau de données.
       </p>
@@ -72,6 +72,7 @@ function TopNotesSection() {
       title={top ? `${top.name} est la note la plus utilisée${family ? ` chez les ${FAMILIES[family].toLowerCase()}` : ''}` : 'Les notes les plus utilisées'}
       subtitle="Nombre de parfums qui contiennent chaque note (15 premières). Touchez une barre pour ouvrir la note."
       state={state}
+      chartHeight={470}
       table={
         <DataTable
           columns={[{ label: 'Note' }, { label: 'Parfums', align: 'right' }]}
@@ -113,6 +114,7 @@ function FamiliesSection() {
       subtitle="Répartition des parfums sortis chaque décennie, selon la famille de leur accord principal."
       note={YEAR_NOTE}
       state={state}
+      chartHeight={280}
       table={
         <DataTable
           columns={[{ label: 'Décennie' }, ...FAMILY_SERIES.map((s) => ({ label: s.label, align: 'right' })), { label: 'Parfums', align: 'right' }]}
@@ -141,6 +143,7 @@ function GenderSection() {
       subtitle="Répartition des parfums sortis chaque décennie selon le genre indiqué par Fragrantica."
       note={YEAR_NOTE}
       state={state}
+      chartHeight={280}
       table={
         <DataTable
           columns={[{ label: 'Décennie' }, ...GENDER_SERIES.map((s) => ({ label: s.label, align: 'right' })), { label: 'Parfums', align: 'right' }]}
@@ -170,6 +173,7 @@ function SeasonSection() {
       subtitle="Pour chaque accord : part des votes « été » moins part des votes « hiver » des parfums qui le contiennent, en points (parfums d'au moins 100 votants)."
       note={`Les 8 accords les plus marqués de chaque côté, sur ${all.length} accords présents dans au moins 300 parfums (tous dans le tableau).`}
       state={state}
+      chartHeight={420}
       table={
         <DataTable
           columns={[{ label: 'Accord' }, { label: 'Été − hiver (points)', align: 'right' }, { label: 'Parfums', align: 'right' }]}
@@ -199,6 +203,7 @@ function BrandSection() {
       title="Chaque grande marque a sa signature"
       subtitle="Part des parfums de chaque marque (au moins 100 votants) où l'accord figure parmi les 3 principaux. Les 12 marques les plus populaires, les 10 accords les plus fréquents chez elles."
       state={state}
+      chartHeight={540}
       table={
         <DataTable
           columns={[{ label: 'Marque' }, ...accords.map((a) => ({ label: ACCORDS[a] ?? a, align: 'right' }))]}

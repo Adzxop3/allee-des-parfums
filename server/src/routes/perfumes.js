@@ -10,7 +10,8 @@ const router = Router()
 // Recherche dans le nom du parfum et le nom de la marque
 router.get('/', async (req, res) => {
   const { page, limit, offset } = getPagination(req.query)
-  const q = (req.query.q ?? '').trim()
+  // Les noms de parfums et de marques font bien moins de 100 caractères
+  const q = String(req.query.q ?? '').trim().slice(0, 100)
 
   // % et _ sont des jokers pour ILIKE : on les échappe
   const pattern = `%${q.replace(/[\\%_]/g, '\\$&')}%`

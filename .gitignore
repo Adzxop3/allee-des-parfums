@@ -7,3 +7,7 @@ data/*
 !data/.gitkeep
 .venv/
 __pycache__/
+
+# Résultats des tests de bout en bout (traces en cas d'échec)
+test-results/
+playwright-report/

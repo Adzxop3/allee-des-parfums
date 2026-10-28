@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router'
-import { addRecentPerfume } from '../history.js'
-import { describePerfume } from '../describe.js'
-import { ACCORDS, GENDERS, MOODS, NOTE_POSITIONS } from '../labels.js'
 import CollectionControl from '../components/CollectionControl.jsx'
+import PerfumeImage from '../components/PerfumeImage.jsx'
 import StarDisplay from '../components/StarDisplay.jsx'
-import ReviewsSection from '../reviews/ReviewsSection.jsx'
 import { ErrorMessage, Loading } from '../components/Status.jsx'
+import { describePerfume } from '../describe.js'
+import { addRecentPerfume } from '../history.js'
+import { ACCORDS, GENDERS, MOODS, NOTE_POSITIONS } from '../labels.js'
+import ReviewsSection from '../reviews/ReviewsSection.jsx'
 import { useFetch } from '../useFetch.js'
 import { usePageTitle } from '../usePageTitle.js'
 
@@ -40,17 +41,17 @@ export default function PerfumePage() {
 
   return (
     <article>
-      <button type="button" onClick={goBack} className="text-sm text-gray-600 hover:text-gray-900">
+      <button type="button" onClick={goBack} className="text-sm text-muted hover:text-ink">
         ← Retour
       </button>
 
       {surprise?.id === perfume.id && (
-        <p className="mt-3 rounded border border-gray-200 bg-white px-3 py-2 text-sm">
+        <p className="mt-3 card px-3 py-2 text-sm">
           <span className="font-semibold">Surprise !</span>{' '}
           {surprise.similarTo ? (
             <>
               Choisi parce qu'il ressemble à{' '}
-              <Link to={`/perfumes/${surprise.similarTo.id}`} className="underline underline-offset-2">
+              <Link to={`/perfumes/${surprise.similarTo.id}`} className="link">
                 {surprise.similarTo.name}
               </Link>
               , que vous avez consulté.
@@ -62,23 +63,23 @@ export default function PerfumePage() {
       )}
 
       <div className="mt-4 grid gap-6 md:grid-cols-[16rem_1fr]">
-        <img
+        <PerfumeImage
           src={perfume.image_url}
           alt={perfume.name}
-          referrerPolicy="no-referrer"
-          className="mx-auto w-48 rounded bg-white md:w-full"
+          priority
+          className="mx-auto h-auto w-48 rounded bg-surface md:w-full"
         />
 
         <div>
           <h1 className="text-2xl font-bold sm:text-3xl">{perfume.name}</h1>
-          <p className="text-lg text-gray-700">{perfume.brand}</p>
-          <p className="mt-1 text-sm text-gray-600">
+          <p className="text-lg text-ink-soft">{perfume.brand}</p>
+          <p className="mt-1 text-sm text-muted">
             {[perfume.year, GENDERS[perfume.gender], perfume.concentration]
               .filter(Boolean)
               .join(' · ')}
           </p>
           {perfume.perfumers.length > 0 && (
-            <p className="mt-1 text-sm text-gray-600">
+            <p className="mt-1 text-sm text-muted">
               Parfumeur{perfume.perfumers.length > 1 ? 's' : ''} :{' '}
               {perfume.perfumers.map((p) => p.name).join(', ')}
             </p>
@@ -99,13 +100,13 @@ export default function PerfumePage() {
               {communitySummary.count > 0 ? (
                 <>
                   <StarDisplay value={communitySummary.average} />
-                  <a href="#avis" className="underline underline-offset-2">
+                  <a href="#avis" className="link">
                     <strong>{communitySummary.average.toLocaleString('fr-FR')}</strong> / 5 dans les avis des
                     membres ({communitySummary.count} avis)
                   </a>
                 </>
               ) : (
-                <a href="#avis" className="text-gray-600 underline underline-offset-2">
+                <a href="#avis" className="text-muted link">
                   Pas encore d'avis des membres : donnez le vôtre
                 </a>
               )}
@@ -123,7 +124,7 @@ export default function PerfumePage() {
               <dl className="mt-2 space-y-2">
                 {noteGroups.map(([position, notes]) => (
                   <div key={position} className="sm:flex sm:gap-4">
-                    <dt className="w-16 shrink-0 text-sm font-medium text-gray-500">
+                    <dt className="w-16 shrink-0 text-sm font-medium text-muted">
                       {NOTE_POSITIONS[position]}
                     </dt>
                     <dd>
@@ -149,9 +150,9 @@ export default function PerfumePage() {
                 {perfume.accords.map((accord) => (
                   <li key={accord.id} className="flex items-center gap-2 text-sm">
                     <span className="w-32 shrink-0">{ACCORDS[accord.name] ?? accord.name}</span>
-                    <span className="h-2 flex-1 rounded bg-gray-200">
+                    <span className="h-2 flex-1 rounded bg-line">
                       <span
-                        className="block h-2 rounded bg-gray-700"
+                        className="block h-2 rounded bg-accent"
                         style={{ width: `${accord.intensity}%` }}
                       />
                     </span>
@@ -173,7 +174,7 @@ export default function PerfumePage() {
 
       <section className="mt-8">
         <h2 className="font-semibold">Description</h2>
-        <p className="mt-2 text-gray-700">{describePerfume(perfume)}</p>
+        <p className="mt-2 text-ink-soft">{describePerfume(perfume)}</p>
       </section>
 
       <ReviewsSection
@@ -191,7 +192,7 @@ function MoodList({ moods }) {
   return (
     <ul className="mt-2 flex flex-wrap gap-2 text-sm">
       {moods.map((mood) => (
-        <li key={mood.id} className="rounded border border-gray-200 bg-white px-2 py-1">
+        <li key={mood.id} className="card px-2 py-1">
           {MOODS[mood.name] ?? mood.name} {Math.round(mood.score * 100)} %
         </li>
       ))}

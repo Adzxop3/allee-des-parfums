@@ -1,8 +1,8 @@
 import { useSearchParams } from 'react-router'
 import FilterChips from '../components/FilterChips.jsx'
 import NoteChip from '../components/NoteChip.jsx'
-import { FAMILIES } from '../labels.js'
 import { ErrorMessage, Loading } from '../components/Status.jsx'
+import { FAMILIES } from '../labels.js'
 import { useFetch } from '../useFetch.js'
 import { usePageTitle } from '../usePageTitle.js'
 
@@ -22,7 +22,7 @@ export default function NotesPage() {
   return (
     <div>
       <h1 className="text-2xl font-bold">Notes</h1>
-      <p className="mt-1 text-sm text-gray-600">
+      <p className="mt-1 text-sm text-muted">
         Les notes sont triées par nombre de parfums qui les utilisent.
       </p>
 
@@ -36,7 +36,7 @@ export default function NotesPage() {
       </div>
 
       {family === 'none' && (
-        <p className="mt-2 text-sm text-gray-600">
+        <p className="mt-2 text-sm text-muted">
           Notes trop rares (moins de 10 parfums) pour que leur famille soit déduite.
         </p>
       )}
@@ -48,7 +48,7 @@ export default function NotesPage() {
 
       {notes && (
         <>
-          <p className="mt-4 text-sm text-gray-600">
+          <p className="mt-4 text-sm text-muted">
             {notes.length.toLocaleString('fr-FR')} note{notes.length > 1 ? 's' : ''}
           </p>
           <ul className={`mt-3 flex flex-wrap gap-2 ${loading ? 'opacity-50' : ''}`}>

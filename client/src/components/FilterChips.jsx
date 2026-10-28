@@ -1,3 +1,5 @@
+import { chipClass } from '../ui/styles.js'
+
 // Rangée de chips cliquables (un seul choix à la fois).
 // Sur mobile, la rangée défile horizontalement au doigt au lieu de s'empiler.
 export default function FilterChips({ options, value, onChange, label }) {
@@ -15,11 +17,7 @@ export default function FilterChips({ options, value, onChange, label }) {
             type="button"
             aria-pressed={selected}
             onClick={() => onChange(option.value)}
-            className={`shrink-0 rounded-full border px-3 py-1.5 text-sm ${
-              selected
-                ? 'border-gray-900 bg-gray-900 text-white'
-                : 'border-gray-300 bg-white hover:border-gray-500'
-            }`}
+            className={chipClass(selected)}
           >
             {option.label}
           </button>

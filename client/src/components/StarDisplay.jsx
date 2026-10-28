@@ -5,8 +5,8 @@ function Stars({ filled }) {
     <svg key={i} viewBox="0 0 20 20" className="size-4 shrink-0">
       <path
         d={STAR}
-        fill={filled ? '#eda100' : 'none'}
-        stroke={filled ? '#b07a00' : '#6f6e69'}
+        fill={filled ? 'var(--star)' : 'none'}
+        stroke={filled ? 'var(--star-line)' : 'var(--chart-muted)'}
         strokeWidth="1.2"
       />
     </svg>

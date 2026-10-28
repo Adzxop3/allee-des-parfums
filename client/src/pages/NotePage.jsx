@@ -3,8 +3,8 @@ import NoteChip from '../components/NoteChip.jsx'
 import Pagination from '../components/Pagination.jsx'
 import PerfumeGrid from '../components/PerfumeGrid.jsx'
 import SortSelect from '../components/SortSelect.jsx'
-import { FAMILIES } from '../labels.js'
 import { ErrorMessage, Loading } from '../components/Status.jsx'
+import { FAMILIES } from '../labels.js'
 import { useFetch } from '../useFetch.js'
 import { usePageTitle } from '../usePageTitle.js'
 
@@ -32,14 +32,14 @@ export default function NotePage() {
 
   return (
     <div>
-      <Link to="/notes" className="text-sm text-gray-600 hover:text-gray-900">
+      <Link to="/notes" className="text-sm text-muted hover:text-ink">
         ← Toutes les notes
       </Link>
 
       <h1 className="mt-4 text-2xl font-bold sm:text-3xl">{note.name}</h1>
-      <p className="mt-1 text-sm text-gray-600">
+      <p className="mt-1 text-sm text-muted">
         {note.family ? (
-          <Link to={`/notes?famille=${note.family}`} className="underline hover:text-gray-900">
+          <Link to={`/notes?famille=${note.family}`} className="underline hover:text-ink">
             {FAMILIES[note.family]}
           </Link>
         ) : (
@@ -67,7 +67,7 @@ export default function NotePage() {
           <h2 className="font-semibold">
             Parfums avec cette note
             {byRating && perfumes.data && (
-              <span className="font-normal text-gray-600">
+              <span className="font-normal text-muted">
                 {' '}
                 ({perfumes.data.total.toLocaleString('fr-FR')} ayant au moins 100 votes)
               </span>

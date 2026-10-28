@@ -2,15 +2,15 @@ import { Link, useSearchParams } from 'react-router'
 import Pagination from '../components/Pagination.jsx'
 import PerfumeGrid from '../components/PerfumeGrid.jsx'
 import SortSelect from '../components/SortSelect.jsx'
+import { ErrorMessage, Loading } from '../components/Status.jsx'
 import SurpriseButton from '../components/SurpriseButton.jsx'
 import { getRecentPerfumes } from '../history.js'
-import { ErrorMessage, Loading } from '../components/Status.jsx'
+import { buttonClass, chipClass, inputClass } from '../ui/styles.js'
 import { useFetch } from '../useFetch.js'
 import { usePageTitle } from '../usePageTitle.js'
 
 const LIMIT = 24
-const surpriseClass =
-  'rounded-full border border-gray-300 bg-white px-3 py-1 hover:border-gray-500 disabled:opacity-60'
+const surpriseClass = `${chipClass(false)} disabled:opacity-60`
 
 export default function SearchPage() {
   // La recherche et la page sont gardées dans l'URL (partageable, bouton retour)
@@ -43,7 +43,7 @@ export default function SearchPage() {
   return (
     <div>
       <h1 className="text-2xl font-bold">Rechercher un parfum</h1>
-      <p className="mt-1 mb-4 text-sm text-gray-600">
+      <p className="mt-1 mb-4 text-sm text-muted">
         Explorez 140 000 parfums par nom ou par marque, ou parcourez-les par notes, ambiances et
         sur la carte olfactive.
       </p>
@@ -59,15 +59,15 @@ export default function SearchPage() {
           type="search"
           defaultValue={q}
           placeholder="Nom de parfum ou de marque"
-          className="min-w-0 flex-1 rounded border border-gray-300 bg-white px-3 py-2"
+          className={inputClass({ className: 'min-w-0 flex-1' })}
         />
-        <button type="submit" className="rounded bg-gray-900 px-4 py-2 text-white">
+        <button type="submit" className={buttonClass()}>
           Rechercher
         </button>
       </form>
 
       <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
-        <span className="text-gray-600">Pas d'idée ?</span>
+        <span className="text-muted">Pas d'idée ?</span>
         <Link to="/questionnaire" className={surpriseClass}>
           Faire le questionnaire
         </Link>
@@ -88,7 +88,7 @@ export default function SearchPage() {
       {data && (
         <>
           <div className="mt-4 mb-4 flex flex-wrap items-center justify-between gap-2">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-muted">
               {data.total.toLocaleString('fr-FR')} parfum{data.total > 1 ? 's' : ''}
               {q && <> pour « {q} »</>}
               {byRating && ' (ayant au moins 100 votes)'}

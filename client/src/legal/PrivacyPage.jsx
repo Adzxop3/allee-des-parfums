@@ -15,41 +15,41 @@ export default function PrivacyPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
-              <tr className="border-b border-gray-300">
+              <tr className="border-b border-field">
                 <th className="py-2 pr-3">Données</th>
                 <th className="py-2 pr-3">Pourquoi</th>
                 <th className="py-2">Durée de conservation</th>
               </tr>
             </thead>
             <tbody className="align-top">
-              <tr className="border-b border-gray-200">
+              <tr className="border-b border-line">
                 <td className="py-2 pr-3">Email, pseudo, mot de passe (enregistré haché, jamais en clair)</td>
                 <td className="py-2 pr-3">Créer et sécuriser votre compte, vous envoyer les emails de service</td>
                 <td className="py-2">Jusqu'à la suppression du compte</td>
               </tr>
-              <tr className="border-b border-gray-200">
+              <tr className="border-b border-line">
                 <td className="py-2 pr-3">Parfumothèque, notes, commentaires personnels, réponses au questionnaire</td>
                 <td className="py-2 pr-3">Les fonctions que vous utilisez (privées, sauf favoris si vous les rendez publics)</td>
                 <td className="py-2">Jusqu'à leur suppression ou celle du compte</td>
               </tr>
-              <tr className="border-b border-gray-200">
+              <tr className="border-b border-line">
                 <td className="py-2 pr-3">Avis, commentaires et votes</td>
                 <td className="py-2 pr-3">Partage avec la communauté (publics, sauf les votes)</td>
                 <td className="py-2">Jusqu'à leur suppression ou celle du compte</td>
               </tr>
-              <tr className="border-b border-gray-200">
+              <tr className="border-b border-line">
                 <td className="py-2 pr-3">Signalements, et journal des décisions de modération</td>
                 <td className="py-2 pr-3">Modérer les contenus ; le journal garde un extrait du contenu traité</td>
                 <td className="py-2">
                   Signalements : jusqu'à la suppression du compte. Journal : <Fill>durée, par ex. 1 an</Fill>
                 </td>
               </tr>
-              <tr className="border-b border-gray-200">
+              <tr className="border-b border-line">
                 <td className="py-2 pr-3">Sessions de connexion</td>
                 <td className="py-2 pr-3">Vous garder connecté</td>
                 <td className="py-2">30 jours après votre dernière visite, ou jusqu'à la déconnexion</td>
               </tr>
-              <tr className="border-b border-gray-200">
+              <tr className="border-b border-line">
                 <td className="py-2 pr-3">Liens envoyés par email (confirmation, mot de passe oublié)</td>
                 <td className="py-2 pr-3">Vérifier votre adresse, réinitialiser votre mot de passe</td>
                 <td className="py-2">24 heures (confirmation) ou 1 heure (mot de passe), usage unique</td>
@@ -95,7 +95,7 @@ export default function PrivacyPage() {
           Vous pouvez accéder à vos données, les rectifier, les supprimer, vous opposer à leur traitement ou en
           demander la portabilité en écrivant à <Fill>adresse email de contact</Fill>. Vous pouvez supprimer
           vous-même votre compte et toutes ses données depuis{' '}
-          <Link to="/compte" className="underline underline-offset-2">
+          <Link to="/compte" className="link">
             Mon compte
           </Link>
           . En cas de difficulté, vous pouvez saisir la CNIL (cnil.fr).

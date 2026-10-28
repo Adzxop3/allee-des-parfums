@@ -1,3 +1,5 @@
+import { inputClass } from '../ui/styles.js'
+
 // Champ de formulaire étiqueté, avec aide et message d'erreur reliés au champ
 export default function TextField({ label, name, error, hint, ...inputProps }) {
   const hintId = hint ? `${name}-aide` : undefined
@@ -13,16 +15,16 @@ export default function TextField({ label, name, error, hint, ...inputProps }) {
         name={name}
         aria-invalid={error ? true : undefined}
         aria-describedby={[hintId, errorId].filter(Boolean).join(' ') || undefined}
-        className={`mt-1 w-full rounded border bg-white px-3 py-2 ${error ? 'border-red-600' : 'border-gray-300'}`}
+        className={inputClass({ error: Boolean(error), className: 'mt-1 w-full' })}
         {...inputProps}
       />
       {hint && (
-        <p id={hintId} className="mt-1 text-xs text-gray-600">
+        <p id={hintId} className="mt-1 text-xs text-muted">
           {hint}
         </p>
       )}
       {error && (
-        <p id={errorId} className="mt-1 text-sm text-red-700">
+        <p id={errorId} className="mt-1 text-sm text-danger">
           {error}
         </p>
       )}

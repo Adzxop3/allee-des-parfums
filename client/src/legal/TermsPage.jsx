@@ -21,7 +21,7 @@ export default function TermsPage() {
           </li>
           <li>
             Vous pouvez supprimer votre compte à tout moment depuis la page{' '}
-            <Link to="/compte" className="underline underline-offset-2">
+            <Link to="/compte" className="link">
               Mon compte
             </Link>
             .

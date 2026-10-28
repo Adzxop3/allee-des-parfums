@@ -272,6 +272,31 @@ await pool.query(
   [Object.keys(NOTE_FAMILY_OVERRIDES), Object.values(NOTE_FAMILY_OVERRIDES)],
 )
 
+// Notes le plus souvent associées à chaque note (fiche d'une note), 12 par note.
+// Score cosinus : parfums en commun / racine(parfums de A × parfums de B). Il évite que les notes
+// omniprésentes (Musk, Amber...) arrivent toujours en tête. Les notes de moins de 10 parfums sont ignorées.
+await pool.query('TRUNCATE note_associations')
+await pool.query(`
+  INSERT INTO note_associations (note_id, rank, associated_id, perfumes_together)
+  WITH note_perfumes AS (SELECT DISTINCT note_id, perfume_id FROM perfume_notes),
+  pairs AS (
+    SELECT a.note_id, b.note_id AS associated_id, count(*)::int AS together
+    FROM note_perfumes a
+    JOIN note_perfumes b ON b.perfume_id = a.perfume_id AND b.note_id <> a.note_id
+    GROUP BY a.note_id, b.note_id
+  ),
+  ranked AS (
+    SELECT p.note_id, p.associated_id, p.together, row_number() OVER (
+      PARTITION BY p.note_id
+      ORDER BY p.together / sqrt(nb.perfume_count::real * greatest(na.perfume_count, 1)) DESC, p.associated_id
+    ) AS rank
+    FROM pairs p
+    JOIN notes na ON na.id = p.note_id
+    JOIN notes nb ON nb.id = p.associated_id
+    WHERE nb.perfume_count >= 10
+  )
+  SELECT note_id, rank, associated_id, together FROM ranked WHERE rank <= 12`)
+
 // 4. Humeurs déduites des accords (voir moods.js).
 // Les anciens scores sont remplacés, dans une transaction, pour suivre les changements de poids.
 

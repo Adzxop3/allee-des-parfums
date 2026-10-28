@@ -1,4 +1,157 @@
 @import "tailwindcss";
+/* Polices hébergées avec le site (aucun appel à un service externe) */
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/fraunces";
+
+/* Mode sombre : classe .dark sur <html>, posée par un script de index.html avant l'affichage */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Couleurs du site, nommées par rôle. Les contrastes ont été vérifiés dans les deux modes :
+   textes >= 4,5:1 sur paper, surface et surface-2 ; contours de champs (field) >= 3:1. */
+:root {
+  color-scheme: light;
+  --paper: #faf7f2; /* fond de page, ivoire */
+  --surface: #fffdf9; /* cartes, champs */
+  --surface-2: #f3ede4; /* fonds discrets, survols */
+  --ink: #1f1a17;
+  --ink-soft: #463d37;
+  --muted: #6a5f57;
+  --line: #e6ddd1; /* séparateurs, bords de cartes */
+  --field: #968779; /* bords des champs et boutons secondaires */
+  --accent: #8c2f39; /* bordeaux */
+  --accent-hover: #74252e;
+  --on-accent: #ffffff;
+  --gold: #8a6a32;
+  --star: #eda100;
+  --star-line: #b07a00;
+  --danger: #a12a2a;
+  --danger-hover: #861f1f;
+  --on-danger: #ffffff;
+  --danger-bg: #fbedec;
+  --danger-line: #e8b4b0;
+  --notice: #6b4a12;
+  --notice-bg: #fbf3e2;
+  --notice-line: #e9d3a6;
+
+  /* Graphiques (palette de référence dataviz, étapes claires) */
+  --chart-ink: #0b0b0b;
+  --chart-ink-2: #52514e;
+  --chart-muted: #6f6e69;
+  --chart-grid: #e1e0d9;
+  --chart-baseline: #c3c2b7;
+  --series-blue: #2a78d6;
+  --series-orange: #eb6834;
+  --series-aqua: #1baf7a;
+  --series-red: #e34948;
+  --map-citrus: #eda100;
+  --map-green: #1baf7a;
+  --map-floral: #e87ba4;
+  --map-gourmand: #e34948;
+  --map-amber: #6250d6;
+  --map-woody: #008300;
+  --map-other: #898781;
+  --map-faded: #dcdbd5;
+}
+
+.dark {
+  color-scheme: dark;
+  --paper: #171311;
+  --surface: #211c19;
+  --surface-2: #2c2622;
+  --ink: #f3ece4;
+  --ink-soft: #d8cec4;
+  --muted: #b0a397;
+  --line: #3a322d;
+  --field: #857669;
+  --accent: #e3a0a7;
+  --accent-hover: #efbcc1;
+  --on-accent: #1f1a17;
+  --gold: #d9b77a;
+  --star: #eda100;
+  --star-line: #c98500;
+  --danger: #f0a5a0;
+  --danger-hover: #f6c2be;
+  --on-danger: #1f1a17;
+  --danger-bg: #3a1e1c;
+  --danger-line: #6e3631;
+  --notice: #ebd3a2;
+  --notice-bg: #33291a;
+  --notice-line: #5e4a28;
+
+  /* Graphiques : étapes sombres de la même palette */
+  --chart-ink: #f0efec;
+  --chart-ink-2: #c3c2b7;
+  --chart-muted: #a3a29b;
+  --chart-grid: #3a3835;
+  --chart-baseline: #5c5b56;
+  --series-blue: #3987e5;
+  --series-orange: #d95926;
+  --series-aqua: #199e70;
+  --series-red: #e66767;
+  --map-amber: #9085e9; /* le violet clair n'atteint pas 3:1 sur fond sombre */
+  --map-faded: #3a3532;
+}
+
+@theme inline {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Fraunces Variable", ui-serif, Georgia, serif;
+
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-field: var(--field);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-on-accent: var(--on-accent);
+  --color-gold: var(--gold);
+  --color-star: var(--star-line);
+  --color-danger: var(--danger);
+  --color-danger-hover: var(--danger-hover);
+  --color-on-danger: var(--on-danger);
+  --color-danger-bg: var(--danger-bg);
+  --color-danger-line: var(--danger-line);
+  --color-notice: var(--notice);
+  --color-notice-bg: var(--notice-bg);
+  --color-notice-line: var(--notice-line);
+}
+
+@layer base {
+  body {
+    background: var(--paper);
+    color: var(--ink);
+  }
+
+  /* Titres en serif, le reste en Inter */
+  h1,
+  h2 {
+    font-family: var(--font-serif);
+    letter-spacing: -0.01em;
+  }
+  h1 {
+    font-weight: 600;
+  }
+}
+
+/* Carte : fond clair, bord fin, sans ombre */
+@utility card {
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--line);
+  background-color: var(--surface);
+}
+
+/* Lien dans un texte : souligné doré, qui prend la couleur du texte au survol */
+@utility link {
+  text-decoration-line: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: color-mix(in oklab, var(--gold) 70%, transparent);
+  &:hover {
+    text-decoration-color: currentColor;
+  }
+}
 
 /* Marques des graphiques : réaction au survol et contour visible au clavier */
 .chart-mark {
@@ -9,12 +162,12 @@
   opacity: 0.8;
 }
 .chart-mark:focus-visible {
-  outline: 2px solid #0b0b0b;
+  outline: 2px solid var(--ink);
   outline-offset: 1px;
 }
 
 /* Focus clavier visible partout (la souris et le toucher n'affichent rien) */
 :focus-visible {
-  outline: 2px solid #0b0b0b;
+  outline: 2px solid var(--ink);
   outline-offset: 2px;
 }

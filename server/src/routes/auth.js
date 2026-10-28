@@ -115,7 +115,8 @@ async function sendResetEmail(user) {
 }
 
 // Un email qui ne part pas ne doit pas faire échouer la requête : on le signale dans les logs
-const sendInBackground = (promise) => promise.catch((err) => console.error('Envoi d’email impossible :', err))
+// En cas d'échec, seul le message est journalisé (pas le contenu de l'email, qui contient un lien de connexion)
+const sendInBackground = (promise) => promise.catch((err) => console.error('Envoi d’email impossible :', err.message))
 
 // Hash factice : on vérifie quand même un mot de passe quand l'email est inconnu,
 // pour que le temps de réponse ne révèle pas si un compte existe

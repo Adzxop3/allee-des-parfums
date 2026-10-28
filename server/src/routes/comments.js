@@ -2,7 +2,7 @@ import { Router } from 'express'
 import { z } from 'zod'
 import { requireAuth, requireVerifiedEmail } from '../auth.js'
 import { pool } from '../db.js'
-import { parseId } from '../pagination.js'
+import { getPagination, parseId } from '../pagination.js'
 import { textField } from '../text.js'
 import { isRepeated, spamProblem } from '../antispam.js'
 import { limiter, perUser } from '../rateLimit.js'
@@ -27,22 +27,31 @@ async function visibleReview(reviewId, viewerId) {
   return rows.length > 0
 }
 
-// GET /api/reviews/:id/comments — du plus ancien au plus récent ; le visiteur voit aussi ses
-// commentaires masqués par la modération (avec leur statut)
+const PAGE_SIZE = 20
+
+// GET /api/reviews/:id/comments?page= — du plus ancien au plus récent, 20 par page ; le visiteur
+// voit aussi ses commentaires masqués par la modération (avec leur statut)
 router.get('/reviews/:id/comments', async (req, res) => {
   const reviewId = parseId(req.params.id)
   if (!reviewId) return res.status(400).json({ error: 'Identifiant invalide' })
   const viewerId = req.user?.id ?? null
   if (!(await visibleReview(reviewId, viewerId))) return res.status(404).json({ error: 'Avis introuvable' })
+  const { page, offset } = getPagination({ ...req.query, limit: PAGE_SIZE })
 
+  const visible = `c.review_id = $1 AND (c.status = 'published' OR c.user_id = $2)`
+  const { rows: countRows } = await pool.query(`SELECT count(*)::int AS total FROM comments c WHERE ${visible}`, [
+    reviewId,
+    viewerId,
+  ])
   const { rows } = await pool.query(
     `SELECT ${COMMENT_COLUMNS}
      FROM comments c JOIN users u ON u.id = c.user_id
-     WHERE c.review_id = $1 AND (c.status = 'published' OR c.user_id = $2)
-     ORDER BY c.created_at, c.id`,
+     WHERE ${visible}
+     ORDER BY c.created_at, c.id
+     LIMIT ${PAGE_SIZE} OFFSET ${offset}`,
     [reviewId, viewerId],
   )
-  res.json({ comments: rows })
+  res.json({ page, limit: PAGE_SIZE, total: countRows[0].total, comments: rows })
 })
 
 // 10 commentaires publiés par 10 minutes et par membre (les refus ne comptent pas)

@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { pool } from './db.js'
-import { GROUP_FAMILIES } from './families.js'
+import { GROUP_FAMILIES } from '../../shared/familyGroups.js'
 import { COMBINED_RATING, COMMUNITY_JOIN } from './ratings.js'
 
 // Moteur du questionnaire : chaque parfum candidat reçoit un score de 0 à 1

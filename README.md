@@ -7,13 +7,14 @@ Site d'exploration de parfums (projet de portfolio), basé sur un dataset issu d
 ```
 client/   Front React (Vite + Tailwind)
 server/   API REST Node.js + Express
+shared/   Code commun au client et au serveur (grandes familles olfactives)
 precompute/ Précalcul de la carte olfactive (Python)
 data/     Dataset source
 ```
 
 ## Prérequis
 
-- Node.js 22.9 ou plus
+- Node.js 22.12 ou plus
 - PostgreSQL 16
 - Python 3.12 (lancé via `py -3.12`, pour la carte olfactive)
 
@@ -45,7 +46,7 @@ data/     Dataset source
    npm run migrate
    ```
 
-5. Importer le dataset `data/perfumes.jsonl` (environ 5 minutes, relançable sans doublon) :
+5. Importer le dataset `data/perfumes.jsonl` (environ 5 minutes, relançable sans doublon). L'import calcule aussi les données dérivées : familles des notes, ambiances, notes souvent associées :
 
    ```bash
    npm run import
@@ -76,6 +77,21 @@ npm run dev:client   # Site sur http://localhost:5173
 Le client redirige les appels `/api/...` vers l'API (proxy Vite).
 
 Pour vérifier la connexion : http://localhost:3001/api/health
+
+## Tests
+
+```bash
+npm install          # une seule fois : installe Playwright (à la racine)
+npm test             # tests de l'API, puis tests de bout en bout
+npm run test:api     # seulement l'API (environ 10 s)
+npm run test:e2e     # seulement le navigateur (compile le site, environ 30 s)
+```
+
+Prérequis : le PostgreSQL local (mêmes identifiants que `server/.env`) et Google Chrome.
+
+- **Base de test séparée** : `parfums_test`, créée si besoin et **vidée à chaque lancement**, puis remplie par les migrations et l'import de 40 parfums **fictifs** (`server/test/fixtures`, générés par `make-fixture.js` : aucun extrait du dataset). Les tests refusent toute base dont le nom ne finit pas par `_test` et ignorent `DATABASE_URL` : la base du site et la production ne sont jamais touchées. Autre nom : variable `TEST_PGDATABASE`.
+- **API** (`server/test`, avec `node --test`) : inscription, connexion, confirmation d'email, mot de passe oublié, limites de tentatives ; droits d'accès (visiteur, membre non confirmé, auteur, modérateur, suppression du compte) ; avis, votes, commentaires, anti-spam ; import (données dérivées, relance sans doublon qui garde les avis) ; référencement (balises, 404, sitemap) ; sécurité (en-têtes, CORS, CSRF, requêtes mal formées, journaux, limite générale). Les emails ne partent pas : ils restent en mémoire et les tests y lisent les liens.
+- **Bout en bout** (`e2e`, avec Playwright) : recherche, inscription, ajout à la parfumothèque, publication d'un avis, questionnaire, balises de référencement dans le HTML servi. Le site compilé est servi par l'API en mode production sur le port 3100. En cas d'échec, une trace est enregistrée dans `test-results/` (`npx playwright show-trace …`).
 
 ## Mise en ligne
 
@@ -112,7 +128,8 @@ Limites des offres gratuites : le service Render se met en veille après 15 min 
    - Build command : `npm run build`
    - Start command : `npm start`
    - Health check path : `/api/health`
-   - Variables d'environnement : `NODE_ENV=production`, `TRUST_PROXY=1`, `DATABASE_URL` (Neon), `APP_URL` (l'adresse Render, par ex. `https://allee-des-parfums.onrender.com`), `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM`.
+   - Variables d'environnement : `NODE_ENV=production`, `TRUST_PROXY=1`, `DATABASE_URL` (Neon), `APP_URL` (l'adresse Render, par ex. `https://allee-des-parfums.onrender.com`), `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` (détail dans `server/.env.example`).
+   - Auto-deploy : seulement après la réussite des vérifications GitHub (« After CI checks pass »).
 5. **Vérifier** : ouvrir `https://…/api/health` (`"database": "ok"`), parcourir le site, créer un compte et vérifier la réception de l'email de confirmation.
 6. **Premier modérateur** : avec le compte créé et confirmé sur le site en ligne, en local :
 
@@ -122,19 +139,91 @@ Limites des offres gratuites : le service Render se met en veille après 15 min 
    Remove-Item Env:DATABASE_URL
    ```
 
-7. **Mises à jour** : chaque `git push` sur `main` redéploie le site sur Render. Si une nouvelle migration existe, lancer `npm run migrate` avec `DATABASE_URL` comme ci-dessus.
+7. **Sauvegardes automatiques** : dans GitHub, ajouter les secrets `DATABASE_URL` et `BACKUP_PASSPHRASE` (voir « Sauvegardes »), puis lancer une première fois le workflow « Sauvegarde » (onglet Actions, « Run workflow »).
+8. **Mises à jour** : chaque `git push` sur `main` lance la CI ; si elle réussit, Render redéploie le site. Si la mise à jour contient une migration, suivre « Migrations de la base » ci-dessous.
+
+### Intégration continue
+
+`.github/workflows/ci.yml`, à chaque push et pull request : installation (`npm ci`), lint (`npm run lint`, aucun avertissement toléré), audit des dépendances livrées (failles élevées), tests de l'API sur un PostgreSQL 16 temporaire, build du site, tests de bout en bout (Chrome). En cas d'échec des tests de bout en bout, les traces Playwright sont jointes au workflow.
+
+Pour reproduire la CI en local : `npm ci` (racine, `server`, `client`), `npm run lint`, `npm test`.
+
+### Migrations de la base
+
+Les migrations sont les fichiers `server/migrations/NNN_nom.sql`, appliqués dans l'ordre par `npm run migrate`. Chaque migration appliquée est notée dans la table `schema_migrations` (avec l'empreinte du fichier) : elle n'est jamais rejouée, et toute migration modifiée après coup est signalée (arrêt avec une erreur).
+
+1. **Écrire** un nouveau fichier, numéro suivant (`014_…sql`). Ne jamais modifier une migration existante. Préférer des changements compatibles avec le code en ligne (ajouter une colonne ou une table plutôt que renommer ou supprimer), car la migration est appliquée juste avant le déploiement du nouveau code.
+2. **Tester en local** : `npm run migrate` sur la base locale, puis `npm test` (la base de test est reconstruite depuis zéro avec toutes les migrations). La CI fait de même à chaque push.
+3. **Sauvegarder la production** : lancer le workflow « Sauvegarde » (onglet Actions) et attendre sa réussite.
+4. **Appliquer en production**, depuis la racine en local (PowerShell) :
+
+   ```powershell
+   $env:DATABASE_URL = "postgresql://...neon.tech/neondb?sslmode=require"
+   npm run migrate
+   Remove-Item Env:DATABASE_URL
+   ```
+
+   Chaque migration est appliquée en entier ou pas du tout (transaction) : en cas d'erreur, la base reste dans son état précédent.
+5. **Déployer** : `git push` sur `main`.
+
+En cas de problème après coup : restaurer la sauvegarde de l'étape 3 (voir ci-dessous) et revenir au commit précédent.
 
 ### Sauvegardes
 
-`npm run db:backup` crée une sauvegarde dans `data/backups/` (dossier exclu de git) : de la base locale, ou de la production si `DATABASE_URL` est défini. À faire régulièrement et avant toute modification importante (l'offre gratuite de Neon a une restauration limitée). `npm run db:restore -- fichier.dump --yes` remplace le contenu de la base `DATABASE_URL` (jamais la base locale par défaut).
+**Automatiques** (`.github/workflows/sauvegarde.yml`) : chaque nuit, la base de production est sauvegardée (`pg_dump`), **restaurée dans une base temporaire pour vérifier qu'elle est utilisable** (`npm run db:verify`), puis chiffrée (AES-256, avec `BACKUP_PASSPHRASE`) et conservée 14 jours dans les artefacts du workflow. Le dépôt est public : une sauvegarde contient les comptes des membres, elle n'est donc jamais publiée en clair. Sans le secret `DATABASE_URL`, le workflow ne fait rien.
+
+Secrets à créer dans GitHub (Settings > Secrets and variables > Actions) : `DATABASE_URL` (la base Neon) et `BACKUP_PASSPHRASE` (une longue phrase de passe, à garder aussi dans un gestionnaire de mots de passe : sans elle, les sauvegardes sont illisibles).
+
+**Restaurer** une sauvegarde automatique (en local, Git Bash pour `gpg`) :
+
+```bash
+# 1. Télécharger l'artefact « sauvegarde-N » (onglet Actions), le dézipper dans data/backups/
+gpg --decrypt --output data/backups/parfums.dump data/backups/parfums-AAAA-MM-JJ-HH-MM.dump.gpg
+# 2. Vérifier qu'elle se restaure (base temporaire locale, supprimée ensuite)
+npm run db:verify -- data/backups/parfums.dump
+# 3. Remplacer la base de production (DATABASE_URL), puis appliquer les migrations plus récentes
+DATABASE_URL="postgresql://...neon.tech/neondb?sslmode=require" npm run db:restore -- data/backups/parfums.dump --yes
+DATABASE_URL="postgresql://...neon.tech/neondb?sslmode=require" npm run migrate
+```
+
+**À la main** : `npm run db:backup` crée une sauvegarde dans `data/backups/` (dossier exclu de git), de la base locale, ou de la production si `DATABASE_URL` est défini. `npm run db:verify -- fichier.dump` teste sa restauration. `npm run db:restore -- fichier.dump --yes` remplace le contenu de la base `DATABASE_URL` (jamais la base locale par défaut).
 
 ### À vérifier avant publication
 
 - **Licence du dataset** : conditions de la source (usage non commercial, attribution) et réutilisation des images hébergées sur fimgs.net ; les conditions d'utilisation de Fragrantica elles-mêmes peuvent restreindre la réutilisation de leurs données.
 - **Pages légales** : compléter les passages surlignés de `/mentions-legales`, `/conditions` et `/confidentialite` (éditeur, hébergeurs Render et Neon, Brevo, durée du journal de modération).
 - **Secrets** : uniquement dans les tableaux de bord Render et Neon, jamais dans le code ; `server/.env` reste exclu de git.
-- **Sauvegardes** : une première sauvegarde de la production juste après la mise en ligne.
+- **Sauvegardes** : secrets GitHub en place et une première exécution réussie du workflow « Sauvegarde » juste après la mise en ligne.
 - **Emails** : SMTP configuré et testé (sans lui, personne ne peut confirmer son compte ni publier).
+
+## Sécurité
+
+| Point | Mise en place | Vérifié par |
+|---|---|---|
+| En-têtes (helmet) | CSP stricte : scripts, styles et polices du site seulement (le petit script du thème est autorisé par son empreinte), images de fimgs.net ; aucun cadre (`frame-ancestors 'none'`, `X-Frame-Options: DENY`) ; HSTS en production | `security.test.js` |
+| CORS | Aucun en-tête CORS : seul le site lui-même (même adresse que l'API) peut lire les réponses | `security.test.js` |
+| CSRF | Cookie `SameSite=Lax` + contrôle de l'en-tête `Origin` sur toute modification (`src/security.js`) | `security.test.js` |
+| Limites de fréquence | Connexion (5 échecs par compte), inscription, mot de passe oublié, publications, suppression du compte, et une limite générale de 1 500 requêtes / 15 min par IP | `auth`, `reviews`, `security` |
+| Cookies | Jeton aléatoire (seul son hash SHA-256 est en base), `HttpOnly`, `SameSite=Lax`, `Secure` en production, 30 jours glissants ; sessions fermées à la réinitialisation du mot de passe | `auth.test.js`, `security.test.js` |
+| Mots de passe | argon2id ; même réponse et même durée que le compte existe ou non | `auth.test.js` |
+| Validation | zod sur chaque corps de requête, identifiants et paramètres d'URL bornés, corps limité à 20 Ko (400 / 413), textes nettoyés (caractères invisibles), SQL toujours paramétré | `auth`, `reviews`, `security` |
+| XSS | Textes des membres affichés en texte brut (échappés par React), aucun HTML injecté ; balises SEO et JSON-LD échappées | `reviews.test.js`, `seo.test.js` |
+| Droits | Vérifiés sur chaque route : visiteur, membre confirmé, auteur, modérateur | `rights.test.js` |
+| Journaux | Pile d'appels seulement : jamais le contenu des requêtes, le détail SQL ni le contenu des emails (liens de connexion) | `security.test.js` |
+| Secrets | Uniquement dans les variables d'environnement (`server/.env`, exclu de git ; voir `.env.example`) ; historique git vérifié | — |
+| Dépendances | `npm audit` : 0 vulnérabilité (client, serveur, racine) | CI, à chaque push (failles élevées des dépendances livrées) |
+
+Limites connues : l'inscription indique qu'une adresse est déjà utilisée (choix habituel, au profit de la clarté) ; les compteurs de limites sont en mémoire (un seul serveur).
+
+## Référencement
+
+Le site est affiché par React dans le navigateur (pas de rendu côté serveur). Mais les moteurs de recherche et les aperçus de liens (WhatsApp, Discord, LinkedIn…) lisent d'abord le HTML envoyé par le serveur : en production, `server/src/seo.js` y insère pour chaque adresse le titre, la description, l'adresse canonique, les balises Open Graph et, sur les fiches parfum, des données structurées `Product` (JSON-LD). La note des données structurées ne vient que des avis publiés sur le site, jamais des votes Fragrantica.
+
+- Codes HTTP justes : 404 pour une adresse inconnue ou un parfum inexistant.
+- Non indexées : pages personnelles (compte, parfumothèque, connexion…), profils des membres, résultats de recherche, notes de moins de 10 parfums.
+- `/sitemap.xml` : pages fixes, parfums d'au moins 100 votes, notes d'au moins 10 parfums (environ 27 800 adresses). `/robots.txt` l'indique et exclut l'API et les pages personnelles.
+- Image d'aperçu par défaut : `client/public/og-image.png` (1200 × 630) ; sur une fiche, la photo du parfum.
+- `APP_URL` doit être l'adresse publique exacte du site : elle sert à toutes ces adresses absolues.
 
 ## API
 
@@ -203,4 +292,4 @@ Communauté (avis, commentaires, votes, signalements) : publication réservée a
 
 Les emails (confirmation d'adresse, mot de passe oublié) partent par SMTP : renseigner `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` et `APP_URL` dans `server/.env` (voir `.env.example`). **Sans `SMTP_HOST`, les emails sont affichés dans le terminal du serveur**, lien compris : pratique pour tester en local.
 
-Les statistiques et les données du questionnaire sont calculées au premier appel puis gardées en mémoire : redémarrer le serveur après un import.
+Les statistiques, la carte et les données du questionnaire sont calculées au premier appel puis gardées en mémoire : redémarrer le serveur après un import. Les réponses du catalogue qui ne changent qu'à l'import (notes, carte, ambiances, statistiques) peuvent aussi être gardées une heure par le navigateur (`Cache-Control`).

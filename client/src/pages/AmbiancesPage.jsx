@@ -2,8 +2,8 @@ import { useSearchParams } from 'react-router'
 import FilterChips from '../components/FilterChips.jsx'
 import Pagination from '../components/Pagination.jsx'
 import PerfumeGrid from '../components/PerfumeGrid.jsx'
-import { MOOD_DESCRIPTIONS, MOODS } from '../labels.js'
 import { ErrorMessage, Loading } from '../components/Status.jsx'
+import { MOOD_DESCRIPTIONS, MOODS } from '../labels.js'
 import { useFetch } from '../useFetch.js'
 import { usePageTitle } from '../usePageTitle.js'
 
@@ -58,7 +58,7 @@ export default function AmbiancesPage() {
   return (
     <div>
       <h1 className="text-2xl font-bold">Ambiances</h1>
-      <p className="mt-1 text-sm text-gray-600">
+      <p className="mt-1 text-sm text-muted">
         Saisons et moments viennent des votes de la communauté Fragrantica ; les humeurs sont
         déduites des accords de chaque parfum.
       </p>
@@ -85,13 +85,13 @@ export default function AmbiancesPage() {
           type="checkbox"
           checked={wellRated}
           onChange={(event) => select('bienNotes', event.target.checked ? '1' : '')}
-          className="accent-gray-900"
+          className="accent-accent"
         />
         Seulement les parfums bien notés (4/5 et plus, votes Fragrantica et avis des membres)
       </label>
 
       {mood && MOOD_DESCRIPTIONS[mood] && (
-        <p className="mt-3 text-sm text-gray-700">
+        <p className="mt-3 text-sm text-ink-soft">
           <span className="font-medium">{MOODS[mood]}</span> : {MOOD_DESCRIPTIONS[mood]}
         </p>
       )}
@@ -103,7 +103,7 @@ export default function AmbiancesPage() {
 
       {data && (
         <>
-          <p className="mt-4 mb-4 text-sm text-gray-600">
+          <p className="mt-4 mb-4 text-sm text-muted">
             {data.total.toLocaleString('fr-FR')} parfum{data.total > 1 ? 's' : ''} (ayant au moins
             100 votes), {hasFilter ? 'les plus correspondants d’abord' : 'les plus populaires d’abord'}
           </p>

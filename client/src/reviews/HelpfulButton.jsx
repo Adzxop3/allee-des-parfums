@@ -1,19 +1,19 @@
 import { useState } from 'react'
-import { Link, useLocation } from 'react-router'
 import { apiSend } from '../api.js'
 import { useAuth } from '../auth/AuthContext.js'
+import LoginPrompt from '../components/LoginPrompt.jsx'
+import { chipClass } from '../ui/styles.js'
 
 // Vote « utile » d'un avis. Sur son propre avis : simple compteur, pas de bouton.
 export default function HelpfulButton({ review, isOwn }) {
   const { user } = useAuth()
-  const location = useLocation()
   const [state, setState] = useState({ count: review.helpfulCount, voted: review.votedByMe })
   const [pending, setPending] = useState(false)
   const [message, setMessage] = useState(null)
 
   if (isOwn) {
     return state.count > 0 ? (
-      <span className="text-sm text-gray-600">
+      <span className="text-sm text-muted">
         {state.count} membre{state.count > 1 ? 's ont' : ' a'} trouvé votre avis utile
       </span>
     ) : null
@@ -42,23 +42,18 @@ export default function HelpfulButton({ review, isOwn }) {
         onClick={toggle}
         disabled={pending}
         aria-pressed={state.voted}
-        className={`rounded-full border px-3 py-1.5 disabled:opacity-60 ${
-          state.voted ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-300 bg-white hover:border-gray-500'
-        }`}
+        className={`${chipClass(state.voted)} disabled:opacity-60`}
       >
         Utile · {state.count}
       </button>
       {message === 'login' && (
         <span>
-          <Link to="/connexion" state={{ from: location.pathname }} className="underline underline-offset-2">
-            Connectez-vous
-          </Link>{' '}
-          pour voter.
+          <LoginPrompt>pour voter.</LoginPrompt>
         </span>
       )}
       {message === 'confirm' && <span>Confirmez votre adresse email pour voter.</span>}
       {message && !['login', 'confirm'].includes(message) && (
-        <span role="alert" className="text-red-700">
+        <span role="alert" className="text-danger">
           {message}
         </span>
       )}

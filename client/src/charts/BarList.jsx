@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router'
 import { ChartTooltip } from './chartKit.jsx'
 import { INK, INK_SECONDARY, roundedBar, useTooltip, useWidth } from './chartUtils.js'
 
-const COLOR = '#2a78d6' // une seule série : une seule couleur
+const COLOR = 'var(--series-blue)' // une seule série : une seule couleur
 const ROW = 28
 const BAR = 16
 const LABEL_WIDTH = 124

@@ -14,8 +14,19 @@ const transport = process.env.SMTP_HOST
 // Adresse du site, pour construire les liens envoyés par email
 export const APP_URL = process.env.APP_URL || 'http://localhost:5173'
 
+// Sans SMTP : les derniers emails restent aussi en mémoire (les tests y lisent les liens envoyés)
+export const outbox = []
+
 export async function sendMail({ to, subject, text }) {
   if (!transport) {
+    // En production, jamais le contenu dans les journaux : il contient des liens de connexion personnels
+    if (process.env.NODE_ENV === 'production') {
+      console.warn(`Email non envoyé (SMTP non configuré) : ${subject}`)
+      return
+    }
+    outbox.push({ to, subject, text })
+    if (outbox.length > 50) outbox.shift()
+    if (process.env.NODE_ENV === 'test') return
     console.log(`\n--- Email (non envoyé : SMTP non configuré) ---\nÀ : ${to}\nObjet : ${subject}\n\n${text}\n---\n`)
     return
   }

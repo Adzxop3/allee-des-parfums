@@ -1,14 +1,16 @@
 import { useState } from 'react'
-import { Link, useLocation } from 'react-router'
+import { Link } from 'react-router'
 import { useAuth } from '../auth/AuthContext.js'
+import LoginPrompt from '../components/LoginPrompt.jsx'
 import { ErrorMessage, Loading } from '../components/Status.jsx'
 import TextField from '../components/TextField.jsx'
+import { formatDate } from '../format.js'
+import { buttonClass } from '../ui/styles.js'
 import { usePageTitle } from '../usePageTitle.js'
 
 export default function AccountPage() {
   usePageTitle('Mon compte')
   const { user, checking, deleteAccount } = useAuth()
-  const location = useLocation()
   const [deleted, setDeleted] = useState(false)
   const [error, setError] = useState(null)
   const [fields, setFields] = useState({})
@@ -35,10 +37,10 @@ export default function AccountPage() {
     return (
       <div className="mx-auto max-w-xl">
         <h1 className="text-2xl font-bold">Compte supprimé</h1>
-        <p role="status" className="mt-4 rounded border border-gray-200 bg-white p-4">
+        <p role="status" className="mt-4 card p-4">
           Votre compte et toutes ses données ont été supprimés. Merci d'avoir utilisé le site.
         </p>
-        <Link to="/" className="mt-4 inline-block underline underline-offset-2">
+        <Link to="/" className="mt-4 inline-block link">
           Retour à l'accueil
         </Link>
       </div>
@@ -52,10 +54,7 @@ export default function AccountPage() {
       <div className="mx-auto max-w-xl">
         <h1 className="text-2xl font-bold">Mon compte</h1>
         <p className="mt-4">
-          <Link to="/connexion" state={{ from: location.pathname }} className="underline underline-offset-2">
-            Connectez-vous
-          </Link>{' '}
-          pour accéder à votre compte.
+          <LoginPrompt>pour accéder à votre compte.</LoginPrompt>
         </p>
       </div>
     )
@@ -65,24 +64,24 @@ export default function AccountPage() {
     <div className="mx-auto max-w-xl">
       <h1 className="text-2xl font-bold">Mon compte</h1>
 
-      <dl className="mt-6 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 rounded border border-gray-200 bg-white p-4 text-sm">
-        <dt className="text-gray-600">Nom</dt>
+      <dl className="mt-6 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 card p-4 text-sm">
+        <dt className="text-muted">Nom</dt>
         <dd>{user.displayName}</dd>
-        <dt className="text-gray-600">Email</dt>
+        <dt className="text-muted">Email</dt>
         <dd className="break-all">
           {user.email}{' '}
-          <span className={user.emailVerified ? 'text-gray-600' : 'text-amber-800'}>
+          <span className={user.emailVerified ? 'text-muted' : 'text-notice'}>
             ({user.emailVerified ? 'confirmé' : 'non confirmé'})
           </span>
         </dd>
-        <dt className="text-gray-600">Inscrit le</dt>
-        <dd>{new Date(user.createdAt).toLocaleDateString('fr-FR', { dateStyle: 'long' })}</dd>
+        <dt className="text-muted">Inscrit le</dt>
+        <dd>{formatDate(user.createdAt)}</dd>
       </dl>
 
       <PublicProfileSettings />
 
-      <section aria-labelledby="suppression-titre" className="mt-10 rounded border border-red-200 bg-white p-4">
-        <h2 id="suppression-titre" className="text-lg font-semibold text-red-800">
+      <section aria-labelledby="suppression-titre" className="mt-10 rounded border border-danger-line bg-surface p-4">
+        <h2 id="suppression-titre" className="text-lg font-semibold text-danger">
           Supprimer mon compte
         </h2>
         <p className="mt-2 text-sm">
@@ -104,7 +103,7 @@ export default function AccountPage() {
           <button
             type="submit"
             disabled={pending}
-            className="rounded bg-red-700 px-4 py-2 text-white hover:bg-red-800 disabled:opacity-60"
+            className={buttonClass({ variant: 'danger' })}
           >
             {pending ? 'Suppression…' : 'Supprimer définitivement mon compte'}
           </button>
@@ -130,13 +129,13 @@ function PublicProfileSettings() {
   }
 
   return (
-    <section aria-labelledby="profil-titre" className="mt-8 rounded border border-gray-200 bg-white p-4">
+    <section aria-labelledby="profil-titre" className="mt-8 card p-4">
       <h2 id="profil-titre" className="text-lg font-semibold">
         Profil public
       </h2>
-      <p className="mt-2 text-sm text-gray-600">
+      <p className="mt-2 text-sm text-muted">
         Votre pseudo et vos avis publiés sont visibles de tous.{' '}
-        <Link to={`/membres/${user.id}`} className="underline underline-offset-2">
+        <Link to={`/membres/${user.id}`} className="link">
           Voir mon profil public
         </Link>
       </p>
@@ -146,14 +145,14 @@ function PublicProfileSettings() {
           checked={user.showFavorites}
           onChange={toggle}
           disabled={status === 'saving'}
-          className="mt-0.5 accent-gray-900"
+          className="mt-0.5 accent-accent"
         />
         <span>
           Afficher mes parfums favoris sur mon profil public
-          <span className="block text-gray-600">Les parfums notés 5 étoiles dans votre parfumothèque.</span>
+          <span className="block text-muted">Les parfums notés 5 étoiles dans votre parfumothèque.</span>
         </span>
       </label>
-      <p role="status" className="mt-2 text-sm text-gray-700">
+      <p role="status" className="mt-2 text-sm text-ink-soft">
         {status === 'saved' && 'Préférence enregistrée.'}
       </p>
       {status && !['saving', 'saved'].includes(status) && <ErrorMessage message={status} />}

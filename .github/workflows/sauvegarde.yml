@@ -1,0 +1,101 @@
+# Sauvegarde automatique de la base de production, chaque nuit, avec un test de restauration.
+# 1. pg_dump de la base en ligne (secret DATABASE_URL)
+# 2. Test de restauration : la sauvegarde est restaurée dans une base PostgreSQL temporaire et vérifiée
+# 3. Chiffrement (secret BACKUP_PASSPHRASE) : le dépôt est public et la sauvegarde contient les comptes
+#    des membres ; elle n'est jamais publiée en clair
+# 4. Conservation 14 jours dans les artefacts du workflow
+# Restauration : voir « Sauvegardes » dans le README.
+name: Sauvegarde
+
+on:
+  schedule:
+    - cron: '30 2 * * *' # chaque nuit à 2 h 30 UTC
+  workflow_dispatch: # bouton « Run workflow » dans l'onglet Actions
+
+jobs:
+  sauvegarder:
+    name: Sauvegarde et test de restauration
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      # PostgreSQL temporaire du workflow, pour le test de restauration
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      # Outils PostgreSQL 16 de la machine (même version que la base)
+      PG_BIN: /usr/lib/postgresql/16/bin
+
+    steps:
+      - name: Secrets configurés ?
+        id: secrets
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::notice::Pas de secret DATABASE_URL : aucune base en ligne à sauvegarder."
+            echo "pret=non" >> "$GITHUB_OUTPUT"
+          elif [ -z "$BACKUP_PASSPHRASE" ]; then
+            echo "::error::Secret BACKUP_PASSPHRASE manquant : la sauvegarde ne peut pas être chiffrée."
+            exit 1
+          else
+            echo "pret=oui" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v5
+        if: steps.secrets.outputs.pret == 'oui'
+
+      - uses: actions/setup-node@v5
+        if: steps.secrets.outputs.pret == 'oui'
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+
+      - name: Installation
+        if: steps.secrets.outputs.pret == 'oui'
+        run: |
+          sudo apt-get install -y --no-install-recommends postgresql-client-16
+          npm ci --prefix server
+
+      - name: Sauvegarde de la base en ligne
+        if: steps.secrets.outputs.pret == 'oui'
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: npm run db:backup
+
+      - name: Test de restauration
+        if: steps.secrets.outputs.pret == 'oui'
+        run: npm run db:verify -- "$(ls data/backups/*.dump)"
+
+      - name: Chiffrement
+        if: steps.secrets.outputs.pret == 'oui'
+        env:
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          file="$(ls data/backups/*.dump)"
+          gpg --batch --yes --symmetric --cipher-algo AES256 --passphrase "$BACKUP_PASSPHRASE" --output "$file.gpg" "$file"
+          rm "$file"
+
+      - uses: actions/upload-artifact@v4
+        if: steps.secrets.outputs.pret == 'oui'
+        with:
+          name: sauvegarde-${{ github.run_number }}
+          path: data/backups/*.dump.gpg
+          retention-days: 14
+          if-no-files-found: error

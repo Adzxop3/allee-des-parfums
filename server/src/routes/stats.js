@@ -1,20 +1,12 @@
 import { Router } from 'express'
+import { browserCache, cached, ONE_HOUR } from '../cache.js'
 import { pool } from '../db.js'
 
 const router = Router()
 
-// Ces statistiques ne changent qu'après un import : on les calcule une fois par démarrage
-// du serveur (certaines prennent quelques secondes), puis on les garde en mémoire.
-const cache = new Map()
-function cached(key, compute) {
-  if (!cache.has(key)) {
-    cache.set(key, compute().catch((err) => {
-      cache.delete(key) // une erreur ne reste pas en cache
-      throw err
-    }))
-  }
-  return cache.get(key)
-}
+// Ces statistiques ne changent qu'après un import : calculées une fois par démarrage du serveur
+// (certaines prennent quelques secondes), gardées en mémoire, et réutilisables par le navigateur
+router.use(browserCache(ONE_HOUR))
 
 const FIRST_DECADE = 1960 // avant, trop peu de parfums par décennie
 const MIN_RATINGS = 100
@@ -119,7 +111,7 @@ router.get('/brand-accords', async (req, res) => {
        ORDER BY popularity DESC, share DESC`,
       [MIN_RATINGS],
     )
-    return rows.map(({ popularity, ...row }) => row)
+    return rows.map(({ popularity: _popularity, ...row }) => row)
   })
   res.json(rows)
 })

@@ -4,7 +4,19 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Parfums</title>
+    <title>Allée des parfums</title>
+    <!-- Les photos des parfums viennent de fimgs.net : connexion ouverte dès le début -->
+    <link rel="preconnect" href="https://fimgs.net" />
+    <!-- Thème clair / sombre appliqué avant l'affichage (pas de flash clair en mode sombre) :
+         choix enregistré par le bouton de l'en-tête, sinon réglage du système.
+         Script intégré à la page pour ne pas attendre une requête ; la CSP du serveur l'autorise par son empreinte. -->
+    <script>
+      try {
+        var saved = localStorage.getItem('theme')
+        var dark = saved ? saved === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches
+        document.documentElement.classList.toggle('dark', dark)
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

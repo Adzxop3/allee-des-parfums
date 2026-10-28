@@ -4,6 +4,7 @@ import { useAuth } from '../auth/AuthContext.js'
 import Pagination from '../components/Pagination.jsx'
 import PerfumeGrid from '../components/PerfumeGrid.jsx'
 import { ErrorMessage, Loading } from '../components/Status.jsx'
+import { formatMonth, withDe } from '../format.js'
 import ReviewCard from '../reviews/ReviewCard.jsx'
 import { useFetch } from '../useFetch.js'
 import { usePageTitle } from '../usePageTitle.js'
@@ -14,8 +15,7 @@ export default function MemberPage() {
   const { user } = useAuth()
   const member = useFetch(`/api/members/${id}`)
   // « Profil de Bob », mais « Profil d'Alice »
-  const name = member.data?.displayName ?? ''
-  usePageTitle(member.data && !member.loading ? `Profil ${/^[aeiouyàâéèêîôû]/i.test(name) ? `d'${name}` : `de ${name}`}` : null)
+  usePageTitle(member.data && !member.loading ? `Profil ${withDe(member.data.displayName)}` : null)
 
   if (member.loading && !member.data) return <Loading />
   if (member.error) return <ErrorMessage message={member.error} onRetry={member.reload} />
@@ -26,14 +26,14 @@ export default function MemberPage() {
   return (
     <div>
       <h1 className="text-2xl font-bold">{displayName}</h1>
-      <p className="mt-1 text-sm text-gray-600">
-        Membre depuis {new Date(memberSince).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })} ·{' '}
+      <p className="mt-1 text-sm text-muted">
+        Membre depuis {formatMonth(memberSince)} ·{' '}
         {reviewCount} avis publié{reviewCount > 1 ? 's' : ''}
       </p>
       {isMe && (
         <p className="mt-2 text-sm">
           C'est votre profil public.{' '}
-          <Link to="/compte" className="underline underline-offset-2">
+          <Link to="/compte" className="link">
             Choisir ce qui y apparaît
           </Link>
         </p>
@@ -64,7 +64,7 @@ function MemberReviews({ memberId }) {
       </h2>
       {list.error && <ErrorMessage message={list.error} onRetry={list.reload} />}
       {list.loading && !list.data && <Loading />}
-      {list.data?.total === 0 && <p className="text-gray-600">Aucun avis publié pour le moment.</p>}
+      {list.data?.total === 0 && <p className="text-muted">Aucun avis publié pour le moment.</p>}
       <div className={`space-y-4 ${list.loading ? 'opacity-50' : ''}`}>
         {list.data?.reviews.map((review) => (
           <ReviewCard key={review.id} review={review} perfume={review.perfume} />

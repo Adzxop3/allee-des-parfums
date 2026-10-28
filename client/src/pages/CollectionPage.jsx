@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import BarList from '../charts/BarList.jsx'
 import { ChartCard, DataTable } from '../charts/chartKit.jsx'
@@ -6,7 +6,9 @@ import CollectionItem from '../components/CollectionItem.jsx'
 import PerfumeGrid from '../components/PerfumeGrid.jsx'
 import RequireVerifiedEmail from '../components/RequireVerifiedEmail.jsx'
 import { ErrorMessage, Loading } from '../components/Status.jsx'
+import Tabs from '../components/Tabs.jsx'
 import { ACCORDS, COLLECTION_STATUSES } from '../labels.js'
+import { inputClass } from '../ui/styles.js'
 import { useFetch } from '../useFetch.js'
 import { usePageTitle } from '../usePageTitle.js'
 
@@ -39,7 +41,6 @@ function Collection() {
   const tab = STATUSES.includes(params.get('statut')) ? params.get('statut') : 'owned'
   const sort = SORTS[params.get('tri')] ? params.get('tri') : 'recent'
   const [search, setSearch] = useState('')
-  const tabRefs = useRef({})
 
   const list = useFetch('/api/collection')
   const summary = useFetch(`/api/collection/summary?status=${tab}`)
@@ -57,17 +58,6 @@ function Collection() {
     setParams(next, { replace: true })
   }
 
-  // Onglets au clavier : flèches gauche / droite, Début, Fin
-  function onTabKeyDown(event) {
-    const index = STATUSES.indexOf(tab)
-    const moves = { ArrowRight: index + 1, ArrowLeft: index - 1, Home: 0, End: STATUSES.length - 1 }
-    if (!(event.key in moves)) return
-    event.preventDefault()
-    const next = STATUSES[(moves[event.key] + STATUSES.length) % STATUSES.length]
-    setParam('statut', next)
-    tabRefs.current[next].focus()
-  }
-
   if (list.error) return <ErrorMessage message={list.error} onRetry={list.reload} />
   if (!list.data) return <Loading />
 
@@ -80,36 +70,22 @@ function Collection() {
 
   return (
     <div>
-      <div role="tablist" aria-label="Statut des parfums" className="flex gap-1 overflow-x-auto border-b border-gray-200">
-        {STATUSES.map((status) => {
-          const selected = status === tab
-          return (
-            <button
-              key={status}
-              ref={(el) => (tabRefs.current[status] = el)}
-              type="button"
-              role="tab"
-              id={`onglet-${status}`}
-              aria-selected={selected}
-              aria-controls="panneau-collection"
-              tabIndex={selected ? 0 : -1}
-              onClick={() => setParam('statut', status)}
-              onKeyDown={onTabKeyDown}
-              className={`-mb-px shrink-0 border-b-2 px-3 py-2 text-sm ${
-                selected ? 'border-gray-900 font-semibold' : 'border-transparent text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              {COLLECTION_STATUSES[status].tab} ({list.data.counts[status]})
-            </button>
-          )
-        })}
-      </div>
+      <Tabs
+        tabs={STATUSES.map((status) => ({
+          key: status,
+          label: `${COLLECTION_STATUSES[status].tab} (${list.data.counts[status]})`,
+        }))}
+        value={tab}
+        onChange={(status) => setParam('statut', status)}
+        label="Statut des parfums"
+        panelId="panneau-collection"
+      />
 
       <div role="tabpanel" id="panneau-collection" aria-labelledby={`onglet-${tab}`} className="mt-4">
         {tabTotal === 0 ? (
-          <p className="text-gray-600">
+          <p className="text-muted">
             Aucun parfum ici pour l'instant. Ajoutez-en depuis la fiche d'un parfum, par exemple en{' '}
-            <Link to="/" className="underline underline-offset-2">
+            <Link to="/" className="link">
               recherchant un parfum
             </Link>
             .
@@ -120,7 +96,7 @@ function Collection() {
             {tabTotal >= 2 ? (
               <CollectionSummary state={summary} tabLabel={COLLECTION_STATUSES[tab].tab} />
             ) : (
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-muted">
                 Ajoutez au moins 2 parfums ici pour voir les notes et accords qui reviennent le plus.
               </p>
             )}
@@ -133,7 +109,7 @@ function Collection() {
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder="Nom ou marque"
-                  className="mt-1 w-full rounded border border-gray-300 bg-white px-3 py-1.5"
+                  className={inputClass({ className: 'mt-1 w-full' })}
                 />
               </label>
               <label className="text-sm">
@@ -141,7 +117,7 @@ function Collection() {
                 <select
                   value={sort}
                   onChange={(event) => setParam('tri', event.target.value)}
-                  className="mt-1 rounded border border-gray-300 bg-white px-2 py-1.5"
+                  className={inputClass({ size: 'sm', className: 'mt-1' })}
                 >
                   {Object.entries(SORTS).map(([key, option]) => (
                     <option key={key} value={key}>
@@ -152,7 +128,7 @@ function Collection() {
               </label>
             </div>
 
-            <p className="mt-3 text-sm text-gray-600" role="status">
+            <p className="mt-3 text-sm text-muted" role="status">
               {items.length} parfum{items.length > 1 ? 's' : ''}
               {words && ` sur ${tabTotal}`}
             </p>
@@ -173,11 +149,11 @@ function Collection() {
 // Parfums proches de ceux que l'utilisateur a notés 4 ou 5 étoiles (tous onglets confondus)
 function Suggestions({ state }) {
   return (
-    <section aria-labelledby="suggestions-titre" className="mt-10 border-t border-gray-200 pt-6">
+    <section aria-labelledby="suggestions-titre" className="mt-10 border-t border-line pt-6">
       <h2 id="suggestions-titre" className="text-xl font-semibold">
         Parfums qui pourraient vous plaire
       </h2>
-      <p className="mt-1 text-sm text-gray-600">
+      <p className="mt-1 text-sm text-muted">
         D'après les parfums de votre collection notés 4 ou 5 étoiles : ceux qui leur ressemblent le plus par
         leurs accords et leurs notes.
       </p>
@@ -185,7 +161,7 @@ function Suggestions({ state }) {
         {state.error && <ErrorMessage message={state.error} onRetry={state.reload} />}
         {state.loading && !state.data && <Loading />}
         {state.data && state.data.basedOn === 0 && (
-          <p className="text-gray-600">
+          <p className="text-muted">
             Donnez 4 ou 5 étoiles à des parfums de votre collection (onglets « Mes parfums » ou « Testés ») pour
             recevoir des suggestions.
           </p>

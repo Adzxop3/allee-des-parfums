@@ -4,8 +4,8 @@ import { ChartTooltip, Legend } from './chartKit.jsx'
 import { BASELINE, INK, INK_SECONDARY, formatInt, formatLean, roundedBar, useTooltip, useWidth } from './chartUtils.js'
 
 // Barres divergentes : deux teintes opposées (froid / chaud) de part et d'autre de zéro
-const WINTER = { label: 'Plutôt porté en hiver', color: '#2a78d6' }
-const SUMMER = { label: 'Plutôt porté en été', color: '#e34948' }
+const WINTER = { label: 'Plutôt porté en hiver', color: 'var(--series-blue)' }
+const SUMMER = { label: 'Plutôt porté en été', color: 'var(--series-red)' }
 
 const ROW = 26
 const BAR = 16

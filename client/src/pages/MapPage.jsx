@@ -3,8 +3,9 @@ import { useSearchParams } from 'react-router'
 import FilterChips from '../components/FilterChips.jsx'
 import MapPreview from '../components/MapPreview.jsx'
 import OlfactoryMap from '../components/OlfactoryMap.jsx'
-import { MAP_GROUPS, mapGroupOf } from '../mapGroups.js'
 import { ErrorMessage, Loading } from '../components/Status.jsx'
+import { MAP_GROUPS, mapGroupOf } from '../mapGroups.js'
+import { chipClass } from '../ui/styles.js'
 import { useFetch } from '../useFetch.js'
 import { usePageTitle } from '../usePageTitle.js'
 
@@ -34,7 +35,7 @@ export default function MapPage() {
   return (
     <div>
       <h1 className="text-2xl font-bold">Carte olfactive</h1>
-      <p className="mt-1 text-sm text-gray-600">
+      <p className="mt-1 text-sm text-muted">
         Chaque point est un parfum ; deux parfums proches ont des accords et des notes semblables.
         Zoomez, déplacez-vous et touchez un point pour le découvrir.
       </p>
@@ -67,9 +68,7 @@ export default function MapPage() {
                   type="button"
                   aria-pressed={selectedGroup}
                   onClick={() => setHighlight(selectedGroup ? '' : group.key)}
-                  className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm ${
-                    selectedGroup ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-300 bg-white'
-                  }`}
+                  className={`${chipClass(selectedGroup)} flex items-center gap-1.5`}
                 >
                   <span className="inline-block size-2.5 rounded-full" style={{ background: group.color }} />
                   {group.label}
@@ -86,9 +85,9 @@ export default function MapPage() {
         </div>
       )}
 
-      <div className="relative mt-3 h-[65vh] min-h-[360px] overflow-hidden rounded border border-gray-200 bg-white">
+      <div className="relative mt-3 h-[65vh] min-h-[360px] overflow-hidden card">
         {loading && (
-          <div className="absolute top-3 left-3 z-10 rounded bg-white/90 px-2 py-1 text-sm">
+          <div className="absolute top-3 left-3 z-10 rounded bg-surface/90 px-2 py-1 text-sm">
             <Loading label="Chargement de la carte…" />
           </div>
         )}

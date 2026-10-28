@@ -7,8 +7,8 @@ export default function LegalLayout({ title, updated, children }) {
     <article className="mx-auto max-w-3xl space-y-6 leading-relaxed">
       <header>
         <h1 className="text-2xl font-bold">{title}</h1>
-        <p className="mt-1 text-sm text-gray-600">Dernière mise à jour : {updated}</p>
-        <p className="mt-3 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+        <p className="mt-1 text-sm text-muted">Dernière mise à jour : {updated}</p>
+        <p className="mt-3 rounded border border-notice-line bg-notice-bg px-3 py-2 text-sm text-notice">
           Modèle à adapter : les passages <Fill>surlignés entre crochets</Fill> sont à compléter avant la mise en ligne.
           Ce texte n'est pas un conseil juridique.
         </p>
@@ -29,5 +29,5 @@ export function Section({ title, children }) {
 
 // Information à compléter par l'éditeur (surlignée pour ne pas l'oublier)
 export function Fill({ children }) {
-  return <mark className="rounded bg-amber-100 px-1 text-amber-950">[{children}]</mark>
+  return <mark className="rounded bg-notice-bg px-1 text-notice">[{children}]</mark>
 }

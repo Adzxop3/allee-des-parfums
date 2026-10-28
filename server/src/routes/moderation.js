@@ -12,6 +12,7 @@ const router = Router()
 
 const TABLES = { review: 'reviews', comment: 'comments' } // type de contenu -> table (liste fixe)
 const LOG_PAGE_SIZE = 20
+const REPORTS_PAGE_SIZE = 20
 
 const optionalText = (max) =>
   z
@@ -87,8 +88,12 @@ router.post('/reports', requireVerifiedEmail, reportLimit, async (req, res) => {
   res.status(201).json({ reported: true })
 })
 
-// GET /api/admin/reports : signalements en attente, regroupés par contenu (les plus signalés d'abord)
+// GET /api/admin/reports?page= : signalements en attente, regroupés par contenu (les plus signalés d'abord)
 router.get('/admin/reports', requireAdmin, async (req, res) => {
+  const { page, offset } = getPagination({ ...req.query, limit: REPORTS_PAGE_SIZE })
+  const { rows: countRows } = await pool.query(
+    'SELECT count(DISTINCT (target_type, target_id))::int AS total FROM reports WHERE NOT resolved',
+  )
   const { rows: groups } = await pool.query(
     `SELECT rp.target_type AS "targetType", rp.target_id AS "targetId", count(*)::int AS count,
             min(rp.created_at) AS "firstReportedAt",
@@ -97,7 +102,8 @@ router.get('/admin/reports', requireAdmin, async (req, res) => {
      FROM reports rp JOIN users u ON u.id = rp.reporter_id
      WHERE NOT rp.resolved
      GROUP BY rp.target_type, rp.target_id
-     ORDER BY count DESC, "firstReportedAt"`,
+     ORDER BY count DESC, "firstReportedAt", rp.target_type, rp.target_id
+     LIMIT ${REPORTS_PAGE_SIZE} OFFSET ${offset}`,
   )
 
   const results = []
@@ -116,7 +122,7 @@ router.get('/admin/reports', requireAdmin, async (req, res) => {
       },
     })
   }
-  res.json({ groups: results })
+  res.json({ page, limit: REPORTS_PAGE_SIZE, total: countRows[0].total, groups: results })
 })
 
 // POST /api/admin/moderate  { targetType, targetId, action: hide|delete|ignore, note? }

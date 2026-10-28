@@ -25,7 +25,7 @@ export default function UserMenu() {
   if (checking) return null
   if (!user) {
     return (
-      <Link to="/connexion" state={{ from: location.pathname + location.search }} className="text-sm text-gray-700 hover:text-gray-900">
+      <Link to="/connexion" state={{ from: location.pathname + location.search }} className="text-sm text-ink-soft hover:text-ink">
         Connexion
       </Link>
     )
@@ -38,9 +38,9 @@ export default function UserMenu() {
         onClick={() => setOpen(!open)}
         aria-expanded={open}
         aria-controls="menu-utilisateur"
-        className="flex items-center gap-1 text-sm text-gray-700 hover:text-gray-900"
+        className="flex items-center gap-1 text-sm text-ink-soft hover:text-ink"
       >
-        {user.displayName}
+        <span className="max-w-40 truncate">{user.displayName}</span>
         <svg aria-hidden="true" viewBox="0 0 16 16" className="size-3" fill="currentColor">
           <path d="M3 6l5 5 5-5z" />
         </svg>
@@ -48,24 +48,24 @@ export default function UserMenu() {
       {open && (
         <div
           id="menu-utilisateur"
-          className="absolute right-0 z-30 mt-2 w-56 rounded border border-gray-200 bg-white p-2 text-sm shadow-lg"
+          className="absolute right-0 z-30 mt-2 w-56 card p-2 text-sm shadow-lg"
         >
-          <p className="truncate px-2 py-1 text-gray-600">{user.email}</p>
-          <Link to="/parfumotheque" className="mt-1 block rounded px-2 py-1.5 hover:bg-gray-100">
+          <p className="truncate px-2 py-1 text-muted">{user.email}</p>
+          <Link to="/parfumotheque" className="mt-1 block rounded px-2 py-1.5 hover:bg-surface-2">
             Ma parfumothèque
           </Link>
-          <Link to="/compte" className="block rounded px-2 py-1.5 hover:bg-gray-100">
+          <Link to="/compte" className="block rounded px-2 py-1.5 hover:bg-surface-2">
             Mon compte
           </Link>
           {user.isAdmin && (
-            <Link to="/admin" className="block rounded px-2 py-1.5 hover:bg-gray-100">
+            <Link to="/admin" className="block rounded px-2 py-1.5 hover:bg-surface-2">
               Modération
             </Link>
           )}
           <button
             type="button"
             onClick={logout}
-            className="mt-1 w-full rounded px-2 py-1.5 text-left hover:bg-gray-100"
+            className="mt-1 w-full rounded px-2 py-1.5 text-left hover:bg-surface-2"
           >
             Se déconnecter
           </button>

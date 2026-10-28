@@ -1,3 +1,4 @@
+import { withDe } from './format.js'
 import { ACCORDS } from './labels.js'
 
 const SEASONS = { winter: 'en hiver', spring: 'au printemps', summer: 'en été', autumn: 'en automne' }
@@ -8,18 +9,13 @@ function joinWithAnd(items) {
   return items.length > 1 ? `${items.slice(0, -1).join(', ')} et ${items.at(-1)}` : (items[0] ?? '')
 }
 
-// "de Chanel", mais "d'Azzaro"
-function ofBrand(brand) {
-  return /^[aeiouyàâéèêîôû]/i.test(brand) ? `d'${brand}` : `de ${brand}`
-}
-
 // Description en français construite à partir des données du parfum
 // (le dataset ne fournit qu'une description en anglais)
 export function describePerfume(perfume) {
   const sentences = []
 
   let intro = `${perfume.name} est un parfum${perfume.gender === 'unisex' ? ' mixte' : ''}`
-  if (perfume.brand) intro += ` ${ofBrand(perfume.brand)}`
+  if (perfume.brand) intro += ` ${withDe(perfume.brand)}`
   if (perfume.gender === 'female') intro += ' pour femme'
   if (perfume.gender === 'male') intro += ' pour homme'
   if (perfume.year) intro += `, lancé en ${perfume.year}`

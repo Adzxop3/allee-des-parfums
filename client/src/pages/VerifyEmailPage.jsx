@@ -37,9 +37,9 @@ export default function VerifyEmailPage() {
       <div className="mt-6">
         {state === 'pending' && <Loading label="Vérification en cours…" />}
         {state === 'done' && (
-          <div role="status" className="rounded border border-gray-200 bg-white p-4">
+          <div role="status" className="card p-4">
             <p>Votre adresse email est confirmée. Merci !</p>
-            <Link to="/" className="mt-3 inline-block underline underline-offset-2">
+            <Link to="/" className="mt-3 inline-block link">
               Aller à l'accueil
             </Link>
           </div>
@@ -47,7 +47,7 @@ export default function VerifyEmailPage() {
         {state === 'error' && (
           <>
             <ErrorMessage message={error} />
-            <p className="mt-3 text-sm text-gray-600">
+            <p className="mt-3 text-sm text-muted">
               Une fois connecté, vous pouvez demander un nouveau lien depuis le bandeau en haut de page.
             </p>
           </>

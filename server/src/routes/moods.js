@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import { browserCache, ONE_HOUR } from '../cache.js'
 import { pool } from '../db.js'
 import { getPagination } from '../pagination.js'
 import { COMBINED_RATING, COMMUNITY_JOIN, RATING_COLUMNS } from '../ratings.js'
@@ -12,7 +13,7 @@ const MIN_RATINGS = 100
 const FILTERS = { season: 'season', occasion: 'occasion', mood: 'mood' }
 
 // GET /api/moods : les ambiances disponibles, par type
-router.get('/', async (req, res) => {
+router.get('/', browserCache(ONE_HOUR), async (req, res) => {
   const { rows } = await pool.query('SELECT id, type, name FROM moods ORDER BY type, id')
   res.json(rows)
 })
@@ -71,7 +72,7 @@ router.get('/perfumes', async (req, res) => {
 
   // Au-delà de la dernière page, aucune ligne : le total n'est alors pas connu (0)
   const total = rows[0]?.total ?? 0
-  res.json({ page, limit, total, results: rows.map(({ total, ...perfume }) => perfume) })
+  res.json({ page, limit, total, results: rows.map(({ total: _total, ...perfume }) => perfume) })
 })
 
 export default router

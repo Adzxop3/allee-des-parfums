@@ -1,0 +1,84 @@
+# Intégration continue : à chaque push et pull request, installation, lint, audit des dépendances,
+# tests de l'API, build du site et tests de bout en bout. Rien n'est déployé ici : l'hébergeur
+# déploie la branche main seulement si ce workflow a réussi (réglage à faire chez l'hébergeur).
+name: CI
+
+on:
+  push:
+  pull_request:
+
+# Un nouveau push sur la même branche annule la vérification précédente, devenue inutile
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verifier:
+    name: Lint, tests et build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    # Base PostgreSQL de test (même version majeure que les outils locaux et la production)
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    # Connexion à la base de test (aucun secret : la base n'existe que le temps du workflow)
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: postgres
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            server/package-lock.json
+            client/package-lock.json
+
+      - name: Installation
+        run: |
+          npm ci
+          npm ci --prefix server
+          npm ci --prefix client
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Audit des dépendances livrées (failles élevées ou critiques)
+        run: |
+          npm audit --omit=dev --audit-level=high --prefix server
+          npm audit --omit=dev --audit-level=high --prefix client
+
+      - name: Tests de l'API
+        run: npm run test:api
+
+      - name: Build du site
+        run: npm run build --prefix client
+
+      - name: Tests de bout en bout
+        run: npx playwright test
+
+      - name: Traces des tests en échec
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: traces-playwright
+          path: test-results/
+          retention-days: 7
+          if-no-files-found: ignore

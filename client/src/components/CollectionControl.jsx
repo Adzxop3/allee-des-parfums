@@ -3,6 +3,7 @@ import { Link } from 'react-router'
 import { apiSend } from '../api.js'
 import { useAuth } from '../auth/AuthContext.js'
 import { COLLECTION_STATUSES } from '../labels.js'
+import { chipClass } from '../ui/styles.js'
 import { useFetch } from '../useFetch.js'
 import RequireVerifiedEmail from './RequireVerifiedEmail.jsx'
 import StarRating from './StarRating.jsx'
@@ -22,7 +23,7 @@ export default function CollectionControl({ perfumeId }) {
     <button
       type="button"
       onClick={() => setInvite(true)}
-      className="rounded-full border border-gray-300 bg-white px-3 py-1.5 text-sm hover:border-gray-500"
+      className={chipClass(false)}
     >
       Ajouter à ma collection
     </button>
@@ -77,9 +78,7 @@ function CollectionEditor({ perfumeId }) {
               aria-pressed={selected}
               disabled={pending}
               onClick={() => !selected && setStatus(status)}
-              className={`rounded-full border px-3 py-1.5 text-sm disabled:opacity-60 ${
-                selected ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-300 bg-white hover:border-gray-500'
-              }`}
+              className={`${chipClass(selected)} disabled:opacity-60`}
             >
               {labels.action}
             </button>
@@ -96,11 +95,11 @@ function CollectionEditor({ perfumeId }) {
             type="button"
             onClick={remove}
             disabled={pending}
-            className="text-sm text-gray-600 underline underline-offset-2"
+            className="text-sm text-muted link"
           >
             Retirer de ma collection
           </button>
-          <Link to={`/parfumotheque?statut=${item.status}`} className="text-sm underline underline-offset-2">
+          <Link to={`/parfumotheque?statut=${item.status}`} className="text-sm link">
             Voir ma parfumothèque
           </Link>
         </div>

@@ -3,6 +3,7 @@ import { Link } from 'react-router'
 import { apiSend } from '../api.js'
 import { ErrorMessage } from '../components/Status.jsx'
 import TextField from '../components/TextField.jsx'
+import { buttonClass } from '../ui/styles.js'
 import { usePageTitle } from '../usePageTitle.js'
 
 export default function ForgotPasswordPage() {
@@ -34,16 +35,16 @@ export default function ForgotPasswordPage() {
       <h1 className="text-2xl font-bold">Mot de passe oublié</h1>
 
       {sentMessage ? (
-        <div role="status" className="mt-6 rounded border border-gray-200 bg-white p-4">
+        <div role="status" className="mt-6 card p-4">
           <p>{sentMessage}</p>
-          <p className="mt-2 text-sm text-gray-600">Le lien est valable une heure. Pensez à vérifier les courriers indésirables.</p>
-          <Link to="/connexion" className="mt-3 inline-block underline underline-offset-2">
+          <p className="mt-2 text-sm text-muted">Le lien est valable une heure. Pensez à vérifier les courriers indésirables.</p>
+          <Link to="/connexion" className="mt-3 inline-block link">
             Retour à la connexion
           </Link>
         </div>
       ) : (
         <>
-          <p className="mt-1 text-sm text-gray-600">
+          <p className="mt-1 text-sm text-muted">
             Indiquez votre adresse email : nous vous enverrons un lien pour choisir un nouveau mot de passe.
           </p>
           <form onSubmit={handleSubmit} noValidate className="mt-6 space-y-4">
@@ -52,13 +53,13 @@ export default function ForgotPasswordPage() {
             <button
               type="submit"
               disabled={pending}
-              className="w-full rounded bg-gray-900 px-4 py-2 text-white disabled:opacity-60"
+              className={buttonClass({ className: 'w-full' })}
             >
               {pending ? 'Envoi…' : 'Envoyer le lien'}
             </button>
           </form>
           <p className="mt-4 text-sm">
-            <Link to="/connexion" className="underline underline-offset-2">
+            <Link to="/connexion" className="link">
               Retour à la connexion
             </Link>
           </p>

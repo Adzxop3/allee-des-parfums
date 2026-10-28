@@ -1,10 +1,13 @@
 import { interpolateRgb, piecewise, scaleLinear } from 'd3'
 import { ACCORDS } from '../labels.js'
+import { useDarkMode } from '../theme.js'
 import { ChartTooltip } from './chartKit.jsx'
 import { INK, INK_MUTED, formatPercent, useTooltip, useWidth } from './chartUtils.js'
 
-// Dégradé séquentiel d'une seule teinte (bleu), du plus clair au plus foncé
+// Dégradé séquentiel d'une seule teinte (bleu) : les petites valeurs se fondent dans le fond,
+// du clair au foncé sur fond clair, du foncé au clair sur fond sombre
 const RAMP = ['#cde2fb', '#9ec5f4', '#6da7ec', '#3987e5', '#256abf', '#184f95', '#0d366b']
+const RAMP_DARK = ['#184f95', '#1c5cab', '#256abf', '#2a78d6', '#5598e7', '#86b6ef', '#b7d3f6']
 const LABEL_WIDTH = 116
 const HEADER = 78 // place pour les noms d'accords inclinés
 const RIGHT = 56 // les noms inclinés dépassent à droite de la dernière colonne
@@ -17,12 +20,13 @@ const MAX_CELL = 40
 export default function BrandHeatmap({ brands, accords, share }) {
   const [ref, width] = useWidth()
   const { tip, bind, containerRef, hideOnBackground } = useTooltip()
+  const steps = useDarkMode() ? RAMP_DARK : RAMP
 
   // Sur un écran étroit, les cases gardent MIN_CELL et la heatmap défile horizontalement
   const cell = Math.max(MIN_CELL, Math.min(MAX_CELL, (width - LABEL_WIDTH - RIGHT) / accords.length))
   const max = Math.max(0.01, ...brands.flatMap((b) => accords.map((a) => share(b, a))))
   const color = scaleLinear().domain([0, max]).range([0, 1]).clamp(true)
-  const ramp = piecewise(interpolateRgb, RAMP)
+  const ramp = piecewise(interpolateRgb, steps)
   const chartWidth = LABEL_WIDTH + cell * accords.length + RIGHT
 
   return (
@@ -73,7 +77,7 @@ export default function BrandHeatmap({ brands, accords, share }) {
       {/* Échelle des couleurs */}
       <div className="mt-3 flex items-center gap-2 text-xs" style={{ color: INK_MUTED }}>
         <span>0 %</span>
-        <span className="h-2.5 w-40 rounded-sm" style={{ background: `linear-gradient(to right, ${RAMP.join(', ')})` }} />
+        <span className="h-2.5 w-40 rounded-sm" style={{ background: `linear-gradient(to right, ${steps.join(', ')})` }} />
         <span>{formatPercent(max)}</span>
       </div>
     </div>

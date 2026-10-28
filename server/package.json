@@ -10,7 +10,9 @@
     "import": "node --env-file=.env --max-old-space-size=4096 src/import.js",
     "make-admin": "node --env-file-if-exists=.env src/make-admin.js",
     "db:backup": "node --env-file-if-exists=.env src/db-backup.js",
-    "db:restore": "node --env-file-if-exists=.env src/db-restore.js"
+    "db:restore": "node --env-file-if-exists=.env src/db-restore.js",
+    "db:verify": "node --env-file-if-exists=.env src/db-verify.js",
+    "test": "node test/setup-db.js && node --test --test-concurrency=1 \"test/*.test.js\""
   },
   "dependencies": {
     "@node-rs/argon2": "^2.2.2",
@@ -24,6 +26,6 @@
     "zod": "^4.6.7"
   },
   "engines": {
-    "node": ">=22.9"
+    "node": ">=22.12"
   }
 }

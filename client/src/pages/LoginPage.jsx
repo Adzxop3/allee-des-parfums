@@ -3,6 +3,7 @@ import { Link, Navigate, useLocation } from 'react-router'
 import { useAuth } from '../auth/AuthContext.js'
 import { ErrorMessage } from '../components/Status.jsx'
 import TextField from '../components/TextField.jsx'
+import { buttonClass } from '../ui/styles.js'
 import { usePageTitle } from '../usePageTitle.js'
 
 export default function LoginPage() {
@@ -35,9 +36,9 @@ export default function LoginPage() {
   return (
     <div className="mx-auto max-w-sm">
       <h1 className="text-2xl font-bold">Connexion</h1>
-      <p className="mt-1 text-sm text-gray-600">
+      <p className="mt-1 text-sm text-muted">
         Pas encore de compte ?{' '}
-        <Link to="/inscription" state={location.state} className="underline underline-offset-2">
+        <Link to="/inscription" state={location.state} className="link">
           Créer un compte
         </Link>
       </p>
@@ -54,14 +55,14 @@ export default function LoginPage() {
           error={fields.password}
         />
         <p className="text-sm">
-          <Link to="/mot-de-passe-oublie" className="underline underline-offset-2">
+          <Link to="/mot-de-passe-oublie" className="link">
             Mot de passe oublié ?
           </Link>
         </p>
         <button
           type="submit"
           disabled={pending}
-          className="w-full rounded bg-gray-900 px-4 py-2 text-white disabled:opacity-60"
+          className={buttonClass({ className: 'w-full' })}
         >
           {pending ? 'Connexion…' : 'Se connecter'}
         </button>

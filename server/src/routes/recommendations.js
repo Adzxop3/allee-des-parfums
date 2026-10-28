@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { requireVerifiedEmail } from '../auth.js'
+import { browserCache, ONE_HOUR } from '../cache.js'
 import { pool } from '../db.js'
 import { answersSchema, loadCandidates, recommend } from '../recommend.js'
 import { COMMUNITY_JOIN, RATING_COLUMNS } from '../ratings.js'
@@ -8,7 +9,7 @@ import { parseBody } from '../validate.js'
 const router = Router()
 
 // GET /api/recommendations/options : exemples de parfums connus pour chaque grande famille
-router.get('/options', async (req, res) => {
+router.get('/options', browserCache(ONE_HOUR), async (req, res) => {
   const { examples } = await loadCandidates()
   res.json({ examples })
 })

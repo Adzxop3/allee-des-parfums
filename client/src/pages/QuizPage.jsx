@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, useLocation } from 'react-router'
 import { apiSend } from '../api.js'
 import { useAuth } from '../auth/AuthContext.js'
+import LoginPrompt from '../components/LoginPrompt.jsx'
 import PerfumeGrid from '../components/PerfumeGrid.jsx'
 import { ErrorMessage, Loading } from '../components/Status.jsx'
 import ChoiceQuestion from '../quiz/ChoiceQuestion.jsx'
 import NotePicker from '../quiz/NotePicker.jsx'
 import { DEFAULT_ANSWERS, QUESTIONS } from '../quiz/questions.js'
+import { buttonClass } from '../ui/styles.js'
 import { useFetch } from '../useFetch.js'
 import { usePageTitle } from '../usePageTitle.js'
 
@@ -67,7 +68,7 @@ export default function QuizPage() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <p className="text-sm text-gray-600">Trouver mon parfum</p>
+      <p className="text-sm text-muted">Trouver mon parfum</p>
       <div className="mt-2 flex items-center gap-3">
         <div
           role="progressbar"
@@ -76,11 +77,11 @@ export default function QuizPage() {
           aria-valuemax={QUESTIONS.length}
           aria-valuenow={step + 1}
           aria-valuetext={`Question ${step + 1} sur ${QUESTIONS.length}`}
-          className="h-2 flex-1 overflow-hidden rounded-full bg-gray-200"
+          className="h-2 flex-1 overflow-hidden rounded-full bg-line"
         >
-          <div className="h-full rounded-full bg-gray-900 transition-[width]" style={{ width: `${((step + 1) / QUESTIONS.length) * 100}%` }} />
+          <div className="h-full rounded-full bg-accent transition-[width]" style={{ width: `${((step + 1) / QUESTIONS.length) * 100}%` }} />
         </div>
-        <span className="shrink-0 text-sm text-gray-600">
+        <span className="shrink-0 text-sm text-muted">
           {step + 1} / {QUESTIONS.length}
         </span>
       </div>
@@ -88,7 +89,7 @@ export default function QuizPage() {
       <h1 id={headingId} ref={headingRef} tabIndex={-1} className="mt-6 text-2xl font-bold focus:outline-none">
         {question.title}
       </h1>
-      {question.help && <p className="mt-1 text-sm text-gray-600">{question.help}</p>}
+      {question.help && <p className="mt-1 text-sm text-muted">{question.help}</p>}
 
       <div className="mt-5">
         {question.type === 'notes' ? (
@@ -122,11 +123,11 @@ export default function QuizPage() {
           type="button"
           onClick={() => setStep(step - 1)}
           disabled={step === 0}
-          className="rounded border border-gray-300 bg-white px-4 py-2 disabled:invisible"
+          className={buttonClass({ variant: 'secondary', className: 'disabled:invisible' })}
         >
           Précédent
         </button>
-        <button type="button" onClick={() => setStep(step + 1)} className="rounded bg-gray-900 px-4 py-2 text-white">
+        <button type="button" onClick={() => setStep(step + 1)} className={buttonClass()}>
           {step === QUESTIONS.length - 1 ? 'Voir mes résultats' : isEmpty ? 'Passer' : 'Suivant'}
         </button>
       </div>
@@ -135,7 +136,6 @@ export default function QuizPage() {
 }
 
 function Results({ answers, verified, onToggleExcludeOwned, onEdit, onRestart, headingRef }) {
-  const location = useLocation()
   // for : les réponses correspondant aux résultats affichés ; tant qu'elles diffèrent, on calcule
   const [state, setState] = useState({ for: null, results: null, error: null })
   const [saveStatus, setSaveStatus] = useState(null) // null | 'saving' | 'saved' | message d'erreur
@@ -167,15 +167,15 @@ function Results({ answers, verified, onToggleExcludeOwned, onEdit, onRestart, h
       <h1 ref={headingRef} tabIndex={-1} className="text-2xl font-bold focus:outline-none">
         Vos parfums
       </h1>
-      <p className="mt-1 text-sm text-gray-600">
+      <p className="mt-1 text-sm text-muted">
         Classés selon vos réponses, parmi les parfums d'au moins 100 votants.
       </p>
 
       <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
-        <button type="button" onClick={onEdit} className="rounded border border-gray-300 bg-white px-3 py-1.5">
+        <button type="button" onClick={onEdit} className={buttonClass({ variant: 'secondary', size: 'sm' })}>
           Modifier mes réponses
         </button>
-        <button type="button" onClick={onRestart} className="rounded border border-gray-300 bg-white px-3 py-1.5">
+        <button type="button" onClick={onRestart} className={buttonClass({ variant: 'secondary', size: 'sm' })}>
           Recommencer
         </button>
         {verified ? (
@@ -184,7 +184,7 @@ function Results({ answers, verified, onToggleExcludeOwned, onEdit, onRestart, h
               type="button"
               onClick={save}
               disabled={saveStatus === 'saving'}
-              className="rounded bg-gray-900 px-3 py-1.5 text-white disabled:opacity-60"
+              className={buttonClass({ size: 'sm' })}
             >
               {saveStatus === 'saving' ? 'Enregistrement…' : 'Enregistrer mes préférences'}
             </button>
@@ -193,22 +193,19 @@ function Results({ answers, verified, onToggleExcludeOwned, onEdit, onRestart, h
                 type="checkbox"
                 checked={answers.excludeOwned}
                 onChange={(event) => onToggleExcludeOwned(event.target.checked)}
-                className="accent-gray-900"
+                className="accent-accent"
               />
               Exclure les parfums que je possède
             </label>
           </>
         ) : (
-          <span className="text-gray-600">
-            <Link to="/connexion" state={{ from: location.pathname }} className="underline underline-offset-2">
-              Connectez-vous
-            </Link>{' '}
-            pour enregistrer vos préférences et exclure les parfums que vous possédez.
+          <span className="text-muted">
+            <LoginPrompt>pour enregistrer vos préférences et exclure les parfums que vous possédez.</LoginPrompt>
           </span>
         )}
       </div>
       {saveStatus === 'saved' && (
-        <p role="status" className="mt-2 text-sm text-gray-700">
+        <p role="status" className="mt-2 text-sm text-ink-soft">
           Préférences enregistrées : elles seront reprises à votre prochaine visite.
         </p>
       )}
@@ -222,7 +219,7 @@ function Results({ answers, verified, onToggleExcludeOwned, onEdit, onRestart, h
         {state.error && !loading && <ErrorMessage message={state.error} />}
         {loading && !state.results && <Loading label="Calcul de vos recommandations…" />}
         {state.results && state.results.length === 0 && (
-          <p className="text-gray-600">Aucun parfum ne correspond : essayez d'assouplir vos réponses.</p>
+          <p className="text-muted">Aucun parfum ne correspond : essayez d'assouplir vos réponses.</p>
         )}
         {state.results && state.results.length > 0 && <PerfumeGrid perfumes={state.results} dimmed={loading} />}
       </div>

@@ -24,16 +24,6 @@ export const ACCORD_FAMILIES = {
   ],
 }
 
-// Les 6 grandes familles de la carte olfactive (mêmes regroupements que client/src/mapGroups.js)
-export const GROUP_FAMILIES = {
-  citrus: ['citrus', 'fresh'],
-  green: ['green'],
-  floral: ['floral', 'white_floral'],
-  gourmand: ['fruity', 'gourmand'],
-  amber: ['amber', 'spicy', 'musky'],
-  woody: ['woody', 'leather'],
-}
-
 // Corrections manuelles pour des notes courantes mal classées par la déduction automatique
 export const NOTE_FAMILY_OVERRIDES = {
   Sandalwood: 'woody',

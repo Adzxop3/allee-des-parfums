@@ -18,8 +18,8 @@ export default function ChoiceQuestion({ question, value, onChange, labelledBy, 
         return (
           <label
             key={option.value}
-            className={`flex cursor-pointer items-start gap-3 rounded border bg-white p-3 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-gray-900 ${
-              checked ? 'border-gray-900 ring-1 ring-gray-900' : 'border-gray-300 hover:border-gray-500'
+            className={`flex cursor-pointer items-start gap-3 rounded border bg-surface p-3 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-ink ${
+              checked ? 'border-accent ring-1 ring-ink' : 'border-field hover:border-field'
             } ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
           >
             <input
@@ -29,7 +29,7 @@ export default function ChoiceQuestion({ question, value, onChange, labelledBy, 
               checked={checked}
               disabled={disabled}
               onChange={() => toggle(option.value)}
-              className="mt-1 accent-gray-900"
+              className="mt-1 accent-accent"
             />
             <span>
               <span className="flex items-center gap-2 font-medium">
@@ -38,9 +38,9 @@ export default function ChoiceQuestion({ question, value, onChange, labelledBy, 
                 )}
                 {option.label}
               </span>
-              {option.description && <span className="block text-sm text-gray-600">{option.description}</span>}
+              {option.description && <span className="block text-sm text-muted">{option.description}</span>}
               {examples[option.value]?.length > 0 && (
-                <span className="block text-sm text-gray-600">Ex. : {examples[option.value].join(', ')}</span>
+                <span className="block text-sm text-muted">Ex. : {examples[option.value].join(', ')}</span>
               )}
             </span>
           </label>

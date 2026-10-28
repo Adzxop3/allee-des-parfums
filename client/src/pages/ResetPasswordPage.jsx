@@ -4,6 +4,7 @@ import { apiSend } from '../api.js'
 import { useAuth } from '../auth/AuthContext.js'
 import { ErrorMessage } from '../components/Status.jsx'
 import TextField from '../components/TextField.jsx'
+import { buttonClass } from '../ui/styles.js'
 import { usePageTitle } from '../usePageTitle.js'
 
 // Ouverte depuis le lien reçu par email : /reinitialiser-mot-de-passe?token=...
@@ -42,14 +43,14 @@ export default function ResetPasswordPage() {
       {!token ? (
         <div className="mt-6">
           <ErrorMessage message="Ce lien est incomplet." />
-          <Link to="/mot-de-passe-oublie" className="mt-3 inline-block underline underline-offset-2">
+          <Link to="/mot-de-passe-oublie" className="mt-3 inline-block link">
             Demander un nouveau lien
           </Link>
         </div>
       ) : done ? (
-        <div role="status" className="mt-6 rounded border border-gray-200 bg-white p-4">
+        <div role="status" className="mt-6 card p-4">
           <p>Votre mot de passe a été changé. Par sécurité, vous avez été déconnecté de tous vos appareils.</p>
-          <Link to="/connexion" className="mt-3 inline-block underline underline-offset-2">
+          <Link to="/connexion" className="mt-3 inline-block link">
             Se connecter
           </Link>
         </div>
@@ -57,7 +58,7 @@ export default function ResetPasswordPage() {
         <form onSubmit={handleSubmit} noValidate className="mt-6 space-y-4">
           {error && <ErrorMessage message={error} />}
           {error && !Object.keys(fields).length && (
-            <Link to="/mot-de-passe-oublie" className="inline-block text-sm underline underline-offset-2">
+            <Link to="/mot-de-passe-oublie" className="inline-block text-sm link">
               Demander un nouveau lien
             </Link>
           )}
@@ -74,7 +75,7 @@ export default function ResetPasswordPage() {
           <button
             type="submit"
             disabled={pending}
-            className="w-full rounded bg-gray-900 px-4 py-2 text-white disabled:opacity-60"
+            className={buttonClass({ className: 'w-full' })}
           >
             {pending ? 'Enregistrement…' : 'Changer le mot de passe'}
           </button>

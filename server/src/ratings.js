@@ -17,5 +17,6 @@ export const COMBINED_RATING = `((coalesce(p.rating_avg, 0) * p.rating_count + c
 export const RATING_COLUMNS = `p.rating_avg AS "ratingAvg", p.rating_count AS "ratingCount",
   round(cr.total::numeric / cr.n, 1)::float AS "communityAvg", coalesce(cr.n, 0)::int AS "communityCount"`
 
-// « Les mieux notés » ne concerne que les parfums assez votés (sinon un seul 5/5 passerait devant tout)
+// « Les mieux notés » ne concerne que les parfums assez votés (sinon un seul 5/5 passerait devant tout).
+// Un index partiel utilise ce seuil (migrations/013) : le changer ici, c'est aussi changer l'index.
 export const MIN_VOTES_FOR_BEST = 100

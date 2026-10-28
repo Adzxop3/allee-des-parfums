@@ -1,7 +1,8 @@
 import { pointer, quadtree, select, zoom, zoomIdentity } from 'd3'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { themeColor, useDarkMode } from '../theme.js'
+import { buttonClass } from '../ui/styles.js'
 
-const FADED_COLOR = '#dcdbd5'
 const HIT_RADIUS = 24 // tolérance (px) autour d'un point pour le clic / toucher
 
 // Carte en Canvas : des dizaines de milliers de points restent fluides (le SVG ne suivrait pas).
@@ -12,6 +13,7 @@ export default function OlfactoryMap({ points, highlight, selectedId, onSelect }
   const zoomRef = useRef(null)
   const [size, setSize] = useState({ width: 0, height: 0 })
   const [transform, setTransform] = useState(zoomIdentity)
+  const dark = useDarkMode() // redessine quand le thème change
 
   // Suit la taille du conteneur (rotation d'écran, redimensionnement)
   useEffect(() => {
@@ -67,8 +69,10 @@ export default function OlfactoryMap({ points, highlight, selectedId, onSelect }
       }
     }
 
+    // Le canvas ne comprend pas var(--…) : on lit la valeur actuelle de la couleur du thème
+    const resolve = (color) => (color.startsWith('var(') ? themeColor(color.slice(6, -1)) : color)
     const fill = (color, list) => {
-      ctx.fillStyle = color
+      ctx.fillStyle = resolve(color)
       ctx.beginPath()
       for (const [x, y] of list) {
         ctx.moveTo(x + radius, y)
@@ -77,26 +81,26 @@ export default function OlfactoryMap({ points, highlight, selectedId, onSelect }
       ctx.fill()
     }
     // Les points estompés d'abord, pour que la famille isolée passe au-dessus
-    fill(FADED_COLOR, faded)
+    fill('var(--map-faded)', faded)
     ctx.globalAlpha = 0.85
     for (const [color, list] of byColor) fill(color, list)
     ctx.globalAlpha = 1
 
-    // Point sélectionné : anneau blanc puis anneau foncé
+    // Point sélectionné : anneau couleur du fond puis anneau couleur du texte
     const selected = placed.find((p) => p.id === selectedId)
     if (selected) {
       const x = transform.applyX(selected.px)
       const y = transform.applyY(selected.py)
       ctx.lineWidth = 3
-      ctx.strokeStyle = '#ffffff'
+      ctx.strokeStyle = themeColor('surface')
       ctx.beginPath()
       ctx.arc(x, y, radius + 4, 0, 2 * Math.PI)
       ctx.stroke()
       ctx.lineWidth = 2
-      ctx.strokeStyle = '#0b0b0b'
+      ctx.strokeStyle = themeColor('ink')
       ctx.stroke()
     }
-  }, [placed, size, transform, highlight, selectedId])
+  }, [placed, size, transform, highlight, selectedId, dark])
 
   // Clic ou toucher : le point le plus proche dans un rayon de HIT_RADIUS pixels
   function handleClick(event) {
@@ -128,7 +132,7 @@ export default function OlfactoryMap({ points, highlight, selectedId, onSelect }
         <button
           type="button"
           onClick={recenter}
-          className="absolute bottom-3 left-3 rounded border border-gray-300 bg-white px-3 py-1 text-sm shadow-sm"
+          className={buttonClass({ variant: 'secondary', size: 'sm', className: 'absolute bottom-3 left-3 shadow-sm' })}
         >
           Recentrer
         </button>
